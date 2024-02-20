@@ -1,34 +1,33 @@
 import os
 import hashlib
-from pathlib import Path
-from environs import Env
+import environ
 
+from pathlib import Path
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
-env = Env()
-if not os.path.exists(".env"):
-    print(".env fayli topilmadi!")
-    print(".env.example faylidan nusxa ko'chirib shablonni o'zizga moslang.")
-    exit(1)
 
-
-env.read_env()
-
-API_TOKEN = env.str("API_TOKEN")
-SECRET_KEY = env.str("SECRET_KEY")
-WEB_DOMAIN = env.str("WEB_DOMAIN")
-DEBUG = env.bool("DEBUG")
-
-WEBHOOK_PATH = "tgbot/" + hashlib.md5(API_TOKEN.encode()).hexdigest()
-WEBHOOK_URL = f"{WEB_DOMAIN}/{WEBHOOK_PATH}"
-
-
-# ____________________________________________________
+env = environ.Env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+
+SECRET_KEY = env("SECRET_KEY")
+
+DEBUG = env("DEBUG") == "1"
+
+API_TOKEN = env("API_TOKEN")
+WEB_DOMAIN = env("WEB_DOMAIN")
+DEBUG = env("DEBUG")
+print(os.environ["WEB_DOMAIN"])
+WEBHOOK_PATH = "tgbot/" + hashlib.md5(API_TOKEN.encode()).hexdigest()
+WEBHOOK_URL = f"{WEB_DOMAIN}/{WEBHOOK_PATH}"
+print(WEBHOOK_URL)
+
+# ____________________________________________________
 
 ALLOWED_HOSTS = ["*"]
 
@@ -50,6 +49,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # external apps
+    "django_lifecycle_checks",
+    # local apps
     "tgbot",
 ]
 
@@ -68,7 +70,7 @@ ROOT_URLCONF = "src.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -90,7 +92,7 @@ WSGI_APPLICATION = "src.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
@@ -160,6 +162,11 @@ UNFOLD = {
                         "title": _("Dashboard"),
                         "icon": "dashboard",
                         "link": reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": _("Xisoblar"),
+                        "icon": "account_balance_wallet",
+                        "link": reverse_lazy("admin:tgbot_account_changelist"),
                     },
                     {
                         "title": _("Foydalanuvchilar"),
