@@ -11,29 +11,20 @@ from django.utils.translation import gettext_lazy as _
 env = environ.Env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
 
 SECRET_KEY = env("SECRET_KEY")
-
 DEBUG = env("DEBUG") == "1"
 
 API_TOKEN = env("API_TOKEN")
 WEB_DOMAIN = env("WEB_DOMAIN")
 DEBUG = env("DEBUG")
-print(os.environ["WEB_DOMAIN"])
 WEBHOOK_PATH = "tgbot/" + hashlib.md5(API_TOKEN.encode()).hexdigest()
 WEBHOOK_URL = f"{WEB_DOMAIN}/{WEBHOOK_PATH}"
-print(WEBHOOK_URL)
 
 # ____________________________________________________
 
 ALLOWED_HOSTS = ["*"]
-
-
-# Application definition
-
 INSTALLED_APPS = [
     # admins
     "unfold",  # before django.contrib.admin

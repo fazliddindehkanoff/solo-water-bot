@@ -9,5 +9,3 @@ async def proceed_update(req: HttpRequest):
     Dispatcher.set_current(dp)
     Bot.set_current(bot)
     await dp.process_update(upd)
-
-

@@ -13,6 +13,11 @@ from .constants import ACCOUNT_TYPE_CHOICES, ROLE_CHOICES
 class TelegramUser(models.Model):
     chat_id = models.CharField(max_length=255)
     role = models.IntegerField(choices=ROLE_CHOICES, default=3)
+    state = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=250, default="")
+    phone_number = models.CharField(max_length=250, default="")
+    longitude = models.CharField(max_length=250, default="")
+    latitude = models.CharField(max_length=250, default="")
 
 
 class ProductTemplate(models.Model):

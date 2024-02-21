@@ -6,15 +6,13 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request: HttpRequest):
-    return HttpResponse('Hello world')
+    return HttpResponse("Hello world")
+
 
 @csrf_exempt
 def telegram(request: HttpRequest):
-    # if request.method == 'post':
     try:
         async_to_sync(proceed_update)(request)
     except Exception as e:
         print(e)
     return HttpResponse()
-    # else:
-    #     return HttpResponse(status=403)
