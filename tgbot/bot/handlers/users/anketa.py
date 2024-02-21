@@ -1,9 +1,9 @@
 from aiogram import types
 
-from tgbot.bot.keyboards import phone_number_btn, location_btn
+from tgbot.bot.keyboards import phone_number_btn, generate_subscription_btns
 from tgbot.bot.loader import dp
 from tgbot.bot.states import PersonalDataStates
-from tgbot.selectors import get_state
+from tgbot.selectors import get_state, get_subscriptions_info
 from tgbot.services import set_state, set_user_data
 
 
@@ -39,8 +39,7 @@ async def answer_phone(message: types.Message):
         return
     set_user_data(user_id, "phone_number", str(phone_number))
     await message.answer(
-        "Suv yetkazilishi kerak bo'lgan manzilni yuboring (location formatida)",
-        reply_markup=location_btn,
+        "Suv yetkazilishi kerak bo'lgan manzilni yuboring",
     )
     set_state(user_id, PersonalDataStates.LOCATION)
 
@@ -50,20 +49,11 @@ async def answer_phone(message: types.Message):
 )
 async def answer_location(message: types.Message):
     user_id = message.chat.id
-    location = message.location
-
-    # Check if the message contains location data
-    if not location:
-        await message.answer(
-            "Iltimos, manzilingizni yuboring yoki tugmachani bosing, so'ng keyingi tugmani bosing.",
-            reply_markup=location_btn,
-        )
-        return
-
-    # Save the location data
-    set_user_data(user_id, "longitude", location.longitude)
-    set_user_data(user_id, "latitude", location.latitude)
-
-    # Continue with your logic
-    await message.answer("Hello world")
-    print("finished")
+    address = message.text
+    text, subscription_ids = get_subscriptions_info()
+    subscription_btns = generate_subscription_btns(subscription_ids)
+    set_user_data(user_id, "address", address)
+    await message.answer(
+        f"ℹ️ Tariflarimiz haqida ma'lumotlar:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
+        reply_markup=subscription_btns,
+    )

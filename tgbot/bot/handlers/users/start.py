@@ -9,27 +9,23 @@ from tgbot.selectors import get_state
 from tgbot.services import set_state
 
 
-# Define command handlers
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
     try:
         user_id = message.chat.id
         role = register_user(user_id=user_id)
-        greetings = {
-            1: f"Assalomu alaykum Xo'jayin, {message.from_user.full_name}!",
-            2: f"Assalomu alaykum, Admin, {message.from_user.full_name}!",
-            3: f"Salom, {message.from_user.full_name}!",
-        }
+
         if role == 1:
             await message.answer(
-                greetings.get(role, "Salom"), reply_markup=admins_main_menu_btns
+                text="Assalomu alaykum 🤖\nXo'jayin xush kelibsiz",
+                reply_markup=admins_main_menu_btns,
             )
-        if role == 3:
-            greetings[
-                3
-            ] += "\nBotimizga xush kelibsiz, Iltimos to'liq ismingizni kiriting:"
+
+        elif role == 2:
             set_state(user_id, PersonalDataStates.FULL_NAME)
-            await message.answer(greetings.get(role, "Salom!"))
+            await message.answer(
+                f"Assalomu alaykum {message.from_user.full_name}\nBotimizga xush kelibsiz, Iltimos to'liq ismingizni kiriting:"
+            )
 
     except Exception as e:
         print(e)
