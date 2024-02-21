@@ -7,7 +7,13 @@ from django_lifecycle import (
     AFTER_CREATE,
 )
 
-from .constants import ACCOUNT_TYPE_CHOICES, ROLE_CHOICES
+from .constants import (
+    ACCOUNT_TYPE_CHOICES,
+    INOUTCOME_CHOICES,
+    ORDER_STATUS_CHOICES,
+    ROLE_CHOICES,
+    SALES_CHOICES,
+)
 
 
 class TelegramUser(models.Model):
@@ -19,11 +25,20 @@ class TelegramUser(models.Model):
     longitude = models.CharField(max_length=250, default="")
     latitude = models.CharField(max_length=250, default="")
 
+    def __str__(self) -> str:
+        return self.full_name
+
 
 class ProductTemplate(models.Model):
     title = models.CharField(verbose_name="Maxsulot nomi", max_length=250)
     volume_liters = models.IntegerField(verbose_name="Hajmi(Litrda): ")
     number_of_products = models.IntegerField()
+    buying_price = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Sotib olish narxi:"
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Sotish narxi:"
+    )
 
     def __str__(self) -> str:
         return f"{self.title} - {self.volume_liters} Liters"
@@ -63,111 +78,123 @@ class Account(models.Model):
         return f"{self.get_type_display()}({self.name}) - {self.balance}"
 
 
-class Income(models.Model):
+class InOutCome(LifecycleModel):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=20, decimal_places=2)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     date_added = models.DateTimeField(auto_now_add=True)
+    status = models.IntegerField(choices=INOUTCOME_CHOICES)
 
     def __str__(self):
         return f"Income of {self.amount} for {self.account} added on {self.date_added}"
 
-
-class Outcome(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=20, decimal_places=2)
-    description = models.TextField()
-    date_added = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Outcome of {self.amount} for {self.account} added on {self.date_added}"
-
-
-class ProductOutcome(LifecycleModel):
-    account = models.ForeignKey(
-        Account, on_delete=models.CASCADE, verbose_name="Account"
-    )
-    product_template = models.ForeignKey(
-        ProductTemplate, on_delete=models.CASCADE, verbose_name="Product Name"
-    )
-    sold_price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Sold Price"
-    )
-    number_of_products = models.IntegerField(verbose_name="Number of Products")
-
-    def __str__(self) -> str:
-        return (
-            f"{self.product_template} - {self.sold_price} - {self.number_of_products}"
-        )
-
     @hook(AFTER_CREATE)
-    def after_create_decrease_number_of_products(self):
-        self.account.balance += self.sold_price * self.number_of_products
-        self.product_template.number_of_products -= self.number_of_products
+    def update_account(self):
+        if self.status == 1:
+            self.account.balance += self.amount
+        else:
+            self.account.balance -= self.amount
         self.account.save()
-        self.product_template.save()
-
-    @hook(BEFORE_UPDATE)
-    def before_update_decrease_number_of_products(self):
-        original_instance = ProductOutcome.objects.get(pk=self.pk)
-        self.product_template.number_of_products -= (
-            self.number_of_products - original_instance.number_of_products
-        )
-        self.account.balance -= (
-            original_instance.sold_price * original_instance.number_of_products
-        )
-        self.account.balance += self.sold_price * self.number_of_products
-        self.account.save()
-        self.product_template.save()
 
     @hook(BEFORE_DELETE)
-    def before_delete_increase_number_of_products(self):
-        self.product_template.number_of_products += self.number_of_products
-        self.product_template.save()
-
-        self.account.balance -= self.sold_price * self.number_of_products
+    def before_delete(self):
+        if self.status == 1:
+            self.account.balance -= self.amount
+        else:
+            self.account.balance += self.amount
         self.account.save()
 
 
-class ProductIncome(LifecycleModel):
+class ProductInOut(LifecycleModel):
+    status = models.IntegerField(choices=SALES_CHOICES, default=1)
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, verbose_name="Account"
     )
     product_template = models.ForeignKey(
         ProductTemplate, on_delete=models.CASCADE, verbose_name="Maxsulot nomi"
     )
-    price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Maxsulotning sotib olingan narxi"
-    )
     number_of_products = models.IntegerField(verbose_name="Sotib olingan maxsulot soni")
 
     def __str__(self) -> str:
-        return f"{self.product_template} - {self.price} - {self.number_of_products}"
+        if self.status == 1:
+            return f"{self.product_template} - {self.product_template.buying_price} - {self.number_of_products}"
+        elif self.status == 2:
+            return f"{self.product_template} - {self.product_template.selling_price} - {self.number_of_products}"
 
     @hook(AFTER_CREATE)
     def after_create_increase_number_of_products(self):
-        self.account.balance -= self.price * self.number_of_products
-        self.product_template.number_of_products += self.number_of_products
+        if self.status == 1:
+            self.account.balance -= (
+                self.product_template.buying_price * self.number_of_products
+            )
+            self.product_template.number_of_products += self.number_of_products
+        elif self.status == 2:
+            self.account.balance += (
+                self.product_template.selling_price * self.number_of_products
+            )
+            self.product_template.number_of_products -= self.number_of_products
         self.account.save()
         self.product_template.save()
 
     @hook(BEFORE_UPDATE)
     def before_update_increase_number_of_products(self):
-        original_instance = ProductOutcome.objects.get(pk=self.pk)
-        self.product_template.number_of_products += (
-            self.number_of_products - original_instance.number_of_products
-        )
-        self.account.balance += (
-            original_instance.price * original_instance.number_of_products
-        )
-        self.account.balance -= self.price * self.number_of_products
-        self.account.save()
-        self.product_template.save()
+        original_instance = ProductInOut.objects.get(pk=self.pk)
+        if original_instance.status != self.status:
+            if original_instance.status == 1:
+                self.account.balance += (
+                    original_instance.product_template.buying_price
+                    * original_instance.number_of_products
+                )
+                self.product_template.number_of_products -= (
+                    original_instance.number_of_products
+                )
+            elif original_instance.status == 2:
+                self.account.balance -= (
+                    original_instance.product_template.selling_price
+                    * original_instance.number_of_products
+                )
+                self.product_template.number_of_products += (
+                    original_instance.number_of_products
+                )
+            if self.status == 1:
+                self.account.balance -= (
+                    self.product_template.buying_price * self.number_of_products
+                )
+                self.product_template.number_of_products += self.number_of_products
+            elif self.status == 2:
+                self.account.balance += (
+                    self.product_template.selling_price * self.number_of_products
+                )
+                self.product_template.number_of_products -= self.number_of_products
+
+            self.account.save()
+            self.product_template.save()
 
     @hook(BEFORE_DELETE)
     def before_delete_decrease_number_of_products(self):
-        self.product_template.number_of_products -= self.number_of_products
-        self.product_template.save()
+        if self.status == 1:
+            self.product_template.number_of_products -= self.number_of_products
+            self.account.balance += (
+                self.product_template.buying_price * self.number_of_products
+            )
+        elif self.status == 2:
+            self.product_template.number_of_products += self.number_of_products
+            self.account.balance -= (
+                self.product_template.selling_price * self.number_of_products
+            )
 
-        self.account.balance += self.price * self.number_of_products
+        self.product_template.save()
         self.account.save()
+
+
+class Order(models.Model):
+    customer = models.ForeignKey(
+        TelegramUser, on_delete=models.CASCADE, verbose_name="Klient"
+    )
+    number_of_products = models.IntegerField(
+        verbose_name="Buyurtma qilingan maxsulotlar"
+    )
+    product = models.ForeignKey(ProductTemplate, on_delete=models.SET_NULL, null=True)
+    status = models.IntegerField(choices=ORDER_STATUS_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)

@@ -1,19 +1,17 @@
 from django.contrib import admin
+from django.contrib import admin
+from unfold.admin import ModelAdmin
 
 from .models import (
     TelegramUser,
-    ProductIncome,
+    ProductInOut,
     ProductTemplate,
-    ProductOutcome,
     Promotion,
     Subscription,
     Account,
-    Income,
-    Outcome,
+    Order,
+    InOutCome,
 )
-
-from django.contrib import admin
-from unfold.admin import ModelAdmin
 
 
 @admin.register(Account)
@@ -21,14 +19,14 @@ class AccountAdminClass(ModelAdmin):
     list_display = ["type", "name", "balance"]
 
 
-@admin.register(Income)
-class IncomeAdminClass(ModelAdmin):
-    pass
+@admin.register(Order)
+class OrderAdminClass(ModelAdmin):
+    list_display = ["customer", "status", "number_of_products", "created_at"]
 
 
-@admin.register(Outcome)
-class OutcomeAdminClass(ModelAdmin):
-    pass
+@admin.register(InOutCome)
+class InOutComeAdminClass(ModelAdmin):
+    list_display = ["account", "amount", "status", "date_added"]
 
 
 @admin.register(Promotion)
@@ -49,14 +47,9 @@ class TelegramUserAdminClass(ModelAdmin):
     ]
 
 
-@admin.register(ProductIncome)
-class ProductIncomeAdminClass(ModelAdmin):
-    list_display = ["product_template", "number_of_products", "price"]
-
-
-@admin.register(ProductOutcome)
-class ProductOutcomeAdminClass(ModelAdmin):
-    list_display = ["product_template", "number_of_products", "sold_price"]
+@admin.register(ProductInOut)
+class ProductInOutAdminClass(ModelAdmin):
+    list_display = ["product_template", "number_of_products", "status"]
 
 
 @admin.register(ProductTemplate)

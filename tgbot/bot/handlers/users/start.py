@@ -3,6 +3,7 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 
 from tgbot.bot.loader import dp
 from tgbot.bot.states import PersonalDataStates
+from tgbot.bot.keyboards import admins_main_menu_btns
 from tgbot.services import register_user
 from tgbot.selectors import get_state
 from tgbot.services import set_state
@@ -19,12 +20,16 @@ async def bot_start(message: types.Message):
             2: f"Assalomu alaykum, Admin, {message.from_user.full_name}!",
             3: f"Salom, {message.from_user.full_name}!",
         }
+        if role == 1:
+            await message.answer(
+                greetings.get(role, "Salom"), reply_markup=admins_main_menu_btns
+            )
         if role == 3:
             greetings[
                 3
             ] += "\nBotimizga xush kelibsiz, Iltimos to'liq ismingizni kiriting:"
             set_state(user_id, PersonalDataStates.FULL_NAME)
+            await message.answer(greetings.get(role, "Salom!"))
 
-        await message.answer(greetings.get(role, "Salom!"))
     except Exception as e:
         print(e)

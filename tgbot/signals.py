@@ -1,9 +1,9 @@
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from .models import ProductIncome
+from .models import ProductInOut
 
 
-@receiver(pre_delete, sender=ProductIncome)
+@receiver(pre_delete, sender=ProductInOut)
 def pre_delete_product_income(sender, instance, **kwargs):
     """
     Signal handler to decrement the number of products associated with ProductIncome

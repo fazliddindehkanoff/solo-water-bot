@@ -21,3 +21,4 @@ def set_user_data(user_id: str, field: str, value: str):
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if hasattr(user, field):
         setattr(user, field, value)
+        user.save()

@@ -112,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Tashkent"
 
 USE_I18N = True
 
@@ -155,6 +155,11 @@ UNFOLD = {
                         "link": reverse_lazy("admin:index"),
                     },
                     {
+                        "title": _("Kirim-Chiqim"),
+                        "icon": "swap_vert",
+                        "link": reverse_lazy("admin:tgbot_inoutcome_changelist"),
+                    },
+                    {
                         "title": _("Xisoblar"),
                         "icon": "account_balance_wallet",
                         "link": reverse_lazy("admin:tgbot_account_changelist"),
@@ -165,14 +170,9 @@ UNFOLD = {
                         "link": reverse_lazy("admin:tgbot_telegramuser_changelist"),
                     },
                     {
-                        "title": _("Maxsulot Sotish"),
-                        "icon": "arrow_upward",
-                        "link": reverse_lazy("admin:tgbot_productoutcome_changelist"),
-                    },
-                    {
-                        "title": _("Maxsulot sotib olish"),
-                        "icon": "arrow_downward",
-                        "link": reverse_lazy("admin:tgbot_productincome_changelist"),
+                        "title": _("Maxsulot aylanmasi"),
+                        "icon": "bloodtype",
+                        "link": reverse_lazy("admin:tgbot_productinout_changelist"),
                     },
                     {
                         "title": _("Maxsulotlar"),
