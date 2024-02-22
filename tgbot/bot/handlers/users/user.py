@@ -13,11 +13,14 @@ from tgbot.bot.states import PersonalDataStates
 from tgbot.selectors import (
     generate_referal_link,
     get_cliend_data,
+    get_cliend_order_data,
+    get_number_of_available_products,
     get_referralers_data,
     get_state,
     get_subscriptions_info,
+    is_user_active,
 )
-from tgbot.services import set_state, set_user_data
+from tgbot.services import create_order, set_state, set_user_data
 
 
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "register")
@@ -177,3 +180,58 @@ async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
         "Asosiy menu",
         reply_markup=menu_btns,
     )
+
+
+@dp.callback_query_handler(lambda callback_query: callback_query.data == "order")
+async def give_an_order(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    user_status = is_user_active(user_id)
+    menu_btns = generate_main_menu_btns()
+    number_of_available_products = get_number_of_available_products(user_id)
+    await callback_query.message.delete()
+
+    if user_status:
+        PersonalDataStates
+        await callback_query.message.answer(
+            f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
+            reply_markup=back_to_main_menu_inline_btn,
+        )
+        set_state(user_id, PersonalDataStates.GET_ORDER)
+
+    else:
+        await callback_query.message.answer(
+            "Sizning akkauntingiz hali aktivlashmagan adminlarimiz tez orada siz bilan bog'lanishadi!",
+            reply_markup=menu_btns,
+        )
+
+
+@dp.message_handler(
+    lambda message: get_state(message.from_user.id) == PersonalDataStates.GET_ORDER
+)
+async def get_number_of_order(message: types.Message):
+    user_id = message.from_user.id
+    order_number: str = message.text
+    number_of_available_products = get_number_of_available_products(user_id)
+
+    if not order_number.isdigit():
+        await message.answer(
+            "Iltimos faqat raqam yuboring", reply_markup=back_to_main_menu_inline_btn
+        )
+
+    else:
+        order_number = int(order_number)
+        if order_number > number_of_available_products:
+            await message.answer(
+                f"Eng ko'pi bilan {number_of_available_products} ta maxsulot buyurtma qilishingiz mumkin xolos, iltimos qaytadan urinib ko'ring",
+                reply_markup=back_to_main_menu_inline_btn,
+            )
+        else:
+            order_id = create_order(user_id, order_number)
+            data = get_cliend_order_data(user_id, order_id, order_number)
+            await bot.send_message(
+                "-1002098130597", f"Yangi buyurtma\n{data}\n\n#yangi_buyurtma"
+            )
+            await message.answer(
+                "Buyurtmangiz qabul qilindi tez orada buyurtmangiz yetkaziladi",
+                reply_markup=generate_main_menu_btns(),
+            )

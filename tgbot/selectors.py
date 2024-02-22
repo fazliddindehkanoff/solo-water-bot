@@ -1,4 +1,4 @@
-from tgbot.models import TelegramUser, Subscription, Referral
+from tgbot.models import Order, TelegramUser, Subscription, Referral
 
 
 def get_state(user_id: str) -> str:
@@ -44,7 +44,7 @@ def generate_referal_link(user_id: str) -> str:
     return f"https://t.me/farqiyoooobot?start={user_id}"
 
 
-def get_referralers_data(user_id):
+def get_referralers_data(user_id: str) -> str:
     data = ""
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if user:
@@ -52,3 +52,25 @@ def get_referralers_data(user_id):
             data += f"{index}. {referraler.referred_user.full_name} - {referraler.referred_user.bonus_balance}"
 
     return data
+
+
+def is_user_active(user_id: str) -> bool:
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    return user and user.is_active
+
+
+def get_number_of_available_products(user_id: str) -> int:
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    if user:
+        return user.subscriptions.last().number_of_available_products
+    return 0
+
+
+def get_cliend_order_data(user_id: str, order_id: int, number_of_products: int) -> str:
+    client_data = ""
+    order = Order.objects.filter(pk=order_id).first()
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    if user and order:
+        client_data = f"<b>Buyurtma raqami</b>: #{order.pk}\n<b>Mijoz ismi:</b> {user.full_name}\n<b>Maxsulot soni:</b> {number_of_products}\n<b>Manzil:</b> {user.address}\n<b>Telefon raqami:</b> {user.phone_number}"
+
+    return client_data

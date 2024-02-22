@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django_lifecycle import (
     LifecycleModel,
     hook,
@@ -227,7 +228,7 @@ class ProductInOut(LifecycleModel):
         self.account.save()
 
 
-class Order(models.Model):
+class Order(LifecycleModel):
     customer = models.ForeignKey(
         TelegramUser, on_delete=models.CASCADE, verbose_name="Klient"
     )
@@ -235,6 +236,17 @@ class Order(models.Model):
         verbose_name="Buyurtma qilingan maxsulotlar"
     )
     product = models.ForeignKey(ProductTemplate, on_delete=models.SET_NULL, null=True)
-    status = models.IntegerField(choices=ORDER_STATUS_CHOICES)
+    status = models.IntegerField(choices=ORDER_STATUS_CHOICES, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @hook(AFTER_CREATE)
+    def set_subscription_activated_date(self):
+        subscription = self.customer.subscriptions.last()
+        if subscription:
+            subscription.number_of_available_products -= self.number_of_products
+            if not subscription.activation_date:
+                subscription.activation_date = timezone.now()
+            subscription.save()
+        else:
+            print("No subscription found for the customer:", self.customer)

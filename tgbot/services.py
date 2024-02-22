@@ -1,4 +1,4 @@
-from .models import Referral, TelegramUser, UserSubscription
+from .models import Order, Referral, TelegramUser, UserSubscription
 
 
 def register_user(user_id: str, user_role: int = 2) -> tuple[int, bool]:
@@ -31,3 +31,21 @@ def create_referal(user_id, refered_user_id):
     referred_user = TelegramUser.objects.filter(chat_id=user_id).first()
     if referrer and referred_user:
         Referral.objects.create(referrer=referrer, referred_user=referred_user)
+
+
+def create_order(user_id: str, number_of_products: int) -> int:
+    order_id = 0
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    subscription = user.subscriptions.last()
+    if user and user.subscriptions.last():
+        try:
+            order = Order.objects.create(
+                customer=user,
+                number_of_products=number_of_products,
+                product=subscription.subscription.product_template,
+            )
+            order_id = order.pk
+        except Exception as e:
+            print(e)
+
+    return order_id

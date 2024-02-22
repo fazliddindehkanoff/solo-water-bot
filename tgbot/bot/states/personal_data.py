@@ -3,3 +3,4 @@ class PersonalDataStates:
     PHONE_NUMBER = "PhoneNumber"
     LOCATION = "Location"
     GET_REFERAL_LINK = "GetReferalLink"
+    GET_ORDER = "GetOrder"
