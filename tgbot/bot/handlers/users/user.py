@@ -14,6 +14,7 @@ from tgbot.selectors import (
     generate_referal_link,
     get_cliend_data,
     get_cliend_order_data,
+    get_client_order_details,
     get_number_of_available_products,
     get_referralers_data,
     get_state,
@@ -81,6 +82,18 @@ async def answer_location(message: types.Message):
     await message.answer(
         f"ℹ️ Tariflarimiz haqida ma'lumotlar:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
         reply_markup=subscription_btns,
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "subscriptions"
+)
+async def list_of_subscriptions(callback_query: types.CallbackQuery):
+    text, _ = get_subscriptions_info()
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        f"Tariflarimiz haqida ma'lumotlar: \n\n{text}",
+        reply_markup=back_to_main_menu_inline_btn,
     )
 
 
@@ -190,7 +203,7 @@ async def give_an_order(callback_query: types.CallbackQuery):
     number_of_available_products = get_number_of_available_products(user_id)
     await callback_query.message.delete()
 
-    if user_status:
+    if user_status and number_of_available_products > 0:
         PersonalDataStates
         await callback_query.message.answer(
             f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
@@ -235,3 +248,14 @@ async def get_number_of_order(message: types.Message):
                 "Buyurtmangiz qabul qilindi tez orada buyurtmangiz yetkaziladi",
                 reply_markup=generate_main_menu_btns(),
             )
+
+
+@dp.callback_query_handler(lambda callback_query: callback_query.data == "my_details")
+async def give_an_order(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    client_order_history = get_client_order_details(user_id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        f"Sizning buyurtmalar tarixingiz: \n\n{client_order_history}",
+        reply_markup=back_to_main_menu_inline_btn,
+    )

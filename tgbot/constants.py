@@ -47,7 +47,7 @@ PAYMENT_CHOICES = [
 ]
 
 MAIN_MENU_BTNS = {
-    "my_details": "ℹ️ Mening ma'lumotlarim",
+    "my_details": "📜 Mening buyurtmalar tarixim",
     "order": "🚚 Buyurtma berish",
     "my_referal_link": "🔗 Referal link olish",
     "my_referals": "👥Referallarim",

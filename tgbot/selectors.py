@@ -74,3 +74,23 @@ def get_cliend_order_data(user_id: str, order_id: int, number_of_products: int) 
         client_data = f"<b>Buyurtma raqami</b>: #{order.pk}\n<b>Mijoz ismi:</b> {user.full_name}\n<b>Maxsulot soni:</b> {number_of_products}\n<b>Manzil:</b> {user.address}\n<b>Telefon raqami:</b> {user.phone_number}"
 
     return client_data
+
+
+def get_client_order_details(user_id: str):
+    data = ""
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    orders = Order.objects.filter(customer=user)
+    for order in orders:
+        data += get_order_details(order) + "\n"
+
+    if not data:
+        data = "Siz hali hech qanday buyurtma bermagansiz"
+    return data
+
+
+def get_order_details(order):
+    data = ""
+    if order:
+        created_at_formatted = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtma xolati: </b> {order.get_status_display()}\n<b>Buyurtma berilgan vaqt: </b> {created_at_formatted}\n<b>Maxsulot soni: </b> {order.number_of_products}\n"
+    return data
