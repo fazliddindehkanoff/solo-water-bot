@@ -1,13 +1,13 @@
 from .models import TelegramUser
 
 
-def register_user(user_id: str, user_role: int = 3) -> int:
+def register_user(user_id: str, user_role: int = 2) -> tuple[int, bool]:
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if not user:
         TelegramUser.objects.create(chat_id=user_id, role=user_role)
-        return user_role
+        return user_role, False
     else:
-        return user.role
+        return user.role, True
 
 
 def set_state(user_id: str, state: str):

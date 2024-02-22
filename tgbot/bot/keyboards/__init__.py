@@ -4,4 +4,5 @@ from .inline import (
     generate_subscription_btns,
     registration_option_btns,
     payment_option_btns,
+    generate_main_menu_btns,
 )

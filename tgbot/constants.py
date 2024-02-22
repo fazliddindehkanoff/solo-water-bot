@@ -45,3 +45,12 @@ PAYMENT_CHOICES = [
     (1, "Karta orqali"),
     (2, "Naqd orqali"),
 ]
+
+MAIN_MENU_BTNS = {
+    "my_details": "ℹ️ Mening ma'lumotlarim",
+    "order": "🚚 Buyurtma berish",
+    "my_referal_link": "🔗 Referal link olish",
+    "my_referals": "👥Referallarim",
+    "contact_with_operator": "📱 Operator bilan aloqa",
+    "subscriptions": "🧾 Tarif",
+}

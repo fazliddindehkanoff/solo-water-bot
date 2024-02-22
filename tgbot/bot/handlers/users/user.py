@@ -4,10 +4,11 @@ from tgbot.bot.keyboards import (
     phone_number_btn,
     generate_subscription_btns,
     payment_option_btns,
+    generate_main_menu_btns,
 )
-from tgbot.bot.loader import dp
+from tgbot.bot.loader import dp, bot
 from tgbot.bot.states import PersonalDataStates
-from tgbot.selectors import get_state, get_subscriptions_info
+from tgbot.selectors import get_cliend_data, get_state, get_subscriptions_info
 from tgbot.services import set_state, set_user_data
 
 
@@ -91,6 +92,12 @@ async def set_subscription(callback_query: types.CallbackQuery):
 async def set_payment_type(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     payment_type = callback_query.data.split(":")[-1]
+    menu_btns = generate_main_menu_btns()
     set_user_data(user_id, "payment_type", payment_type)
     await callback_query.message.delete()
-    await callback_query.message.answer("Asosiy menu")
+    client_data = get_cliend_data(user_id)
+    await bot.send_message(
+        chat_id="-1002098130597",
+        text=f"Yangi mijoz ro'yxatdan o'tdi, Mijoz ma'lumotlar:\n{client_data}",
+    )
+    await callback_query.message.answer("Asosiy menu", reply_markup=menu_btns)

@@ -28,7 +28,7 @@ class TelegramUser(models.Model):
         "Subscription", on_delete=models.SET_NULL, null=True
     )
     is_active = models.BooleanField(default=False)
-    payment_type = models.IntegerField(choices=PAYMENT_CHOICES)
+    payment_type = models.IntegerField(choices=PAYMENT_CHOICES, default=0)
 
     def __str__(self) -> str:
         return self.full_name
