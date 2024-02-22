@@ -11,6 +11,7 @@ from .constants import (
     ACCOUNT_TYPE_CHOICES,
     INOUTCOME_CHOICES,
     ORDER_STATUS_CHOICES,
+    PAYMENT_CHOICES,
     ROLE_CHOICES,
     SALES_CHOICES,
 )
@@ -23,6 +24,11 @@ class TelegramUser(models.Model):
     full_name = models.CharField(max_length=250, default="")
     phone_number = models.CharField(max_length=250, default="")
     address = models.CharField(max_length=500, default="")
+    subscription = models.ForeignKey(
+        "Subscription", on_delete=models.SET_NULL, null=True
+    )
+    is_active = models.BooleanField(default=False)
+    payment_type = models.IntegerField(choices=PAYMENT_CHOICES)
 
     def __str__(self) -> str:
         return self.full_name

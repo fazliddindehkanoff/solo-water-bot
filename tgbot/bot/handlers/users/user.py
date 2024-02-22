@@ -1,10 +1,23 @@
 from aiogram import types
 
-from tgbot.bot.keyboards import phone_number_btn, generate_subscription_btns
+from tgbot.bot.keyboards import (
+    phone_number_btn,
+    generate_subscription_btns,
+    payment_option_btns,
+)
 from tgbot.bot.loader import dp
 from tgbot.bot.states import PersonalDataStates
 from tgbot.selectors import get_state, get_subscriptions_info
 from tgbot.services import set_state, set_user_data
+
+
+@dp.callback_query_handler(lambda callback_query: callback_query.data == "register")
+async def ask_full_name(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    set_state(user_id, PersonalDataStates.FULL_NAME)
+
+    await callback_query.message.delete()
+    await callback_query.message.answer("Iltimos to'liq ismingizni kiriting:")
 
 
 @dp.message_handler(
@@ -57,3 +70,27 @@ async def answer_location(message: types.Message):
         f"ℹ️ Tariflarimiz haqida ma'lumotlar:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
         reply_markup=subscription_btns,
     )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data.startswith("subscription")
+)
+async def set_subscription(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    subscription_id = callback_query.data.split(":")[-1]
+    set_user_data(user_id, "subscription_id", subscription_id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "To'lov turini tanlang: ", reply_markup=payment_option_btns
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data.startswith("payment_by")
+)
+async def set_payment_type(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    payment_type = callback_query.data.split(":")[-1]
+    set_user_data(user_id, "payment_type", payment_type)
+    await callback_query.message.delete()
+    await callback_query.message.answer("Asosiy menu")

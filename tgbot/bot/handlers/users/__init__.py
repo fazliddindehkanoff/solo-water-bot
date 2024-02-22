@@ -1,4 +1,4 @@
 from . import start
-from . import anketa
+from . import user
 from . import admin
 from . import help

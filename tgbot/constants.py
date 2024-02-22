@@ -39,3 +39,9 @@ NUM_EMOJIS = {
     9: "9️⃣",
     10: "🔟",
 }
+
+
+PAYMENT_CHOICES = [
+    (1, "Karta orqali"),
+    (2, "Naqd orqali"),
+]

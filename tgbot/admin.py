@@ -41,7 +41,7 @@ class SubscriptionAdminClass(ModelAdmin):
 
 @admin.register(TelegramUser)
 class TelegramUserAdminClass(ModelAdmin):
-    list_display = ["chat_id", "role"]
+    list_display = ["phone_number", "role", "payment_type", "is_active"]
     list_filter = [
         "role",
     ]
