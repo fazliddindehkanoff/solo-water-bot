@@ -1,4 +1,4 @@
-from .models import Referral, TelegramUser
+from .models import Referral, TelegramUser, UserSubscription
 
 
 def register_user(user_id: str, user_role: int = 2) -> tuple[int, bool]:
@@ -22,9 +22,12 @@ def set_user_data(user_id: str, field: str, value: str):
     if hasattr(user, field):
         setattr(user, field, value)
         user.save()
+    if field == "subscription":
+        UserSubscription.objects.create(user=user, subscription_id=value)
 
 
 def create_referal(user_id, refered_user_id):
-    Referral.objects.create(
-        referer__chat_id=refered_user_id, referred_user__chat_id=user_id
-    )
+    referrer = TelegramUser.objects.filter(chat_id=refered_user_id).first()
+    referred_user = TelegramUser.objects.filter(chat_id=user_id).first()
+    if referrer and referred_user:
+        Referral.objects.create(referrer=referrer, referred_user=referred_user)

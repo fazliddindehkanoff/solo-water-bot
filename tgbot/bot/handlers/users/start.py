@@ -27,9 +27,8 @@ async def bot_start(message: types.Message):
         if exists:
             await message.answer("Asosiy menu", reply_markup=main_menu_btns)
         else:
-            if command_args and command_args.startswith("referal_id="):
-                referral_id = command_args.split("=")[1]
-                create_referal(message.from_user.id, referral_id)
+            if command_args:
+                create_referal(message.from_user.id, command_args)
             await message.answer(
                 f"Assalomu alaykum {message.from_user.full_name}\nBotimizga xush kelibsiz, Ro'yxatdan o'tish turini tanlang",
                 reply_markup=registration_option_btns,

@@ -5,10 +5,18 @@ from tgbot.bot.keyboards import (
     generate_subscription_btns,
     payment_option_btns,
     generate_main_menu_btns,
+    back_to_main_menu_bnt,
+    back_to_main_menu_inline_btn,
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.bot.states import PersonalDataStates
-from tgbot.selectors import get_cliend_data, get_state, get_subscriptions_info
+from tgbot.selectors import (
+    generate_referal_link,
+    get_cliend_data,
+    get_referralers_data,
+    get_state,
+    get_subscriptions_info,
+)
 from tgbot.services import set_state, set_user_data
 
 
@@ -79,7 +87,7 @@ async def answer_location(message: types.Message):
 async def set_subscription(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     subscription_id = callback_query.data.split(":")[-1]
-    set_user_data(user_id, "subscription_id", subscription_id)
+    set_user_data(user_id, "subscription", subscription_id)
     await callback_query.message.delete()
     await callback_query.message.answer(
         "To'lov turini tanlang: ", reply_markup=payment_option_btns
@@ -98,7 +106,7 @@ async def set_payment_type(callback_query: types.CallbackQuery):
     client_data = get_cliend_data(user_id)
     await bot.send_message(
         chat_id="-1002098130597",
-        text=f"Yangi mijoz ro'yxatdan o'tdi, Mijoz ma'lumotlar:\n{client_data}",
+        text=f"Yangi mijoz ro'yxatdan o'tdi, Mijoz ma'lumotlar:\n{client_data}\n\n#yangi_mijoz",
     )
     await callback_query.message.answer("Asosiy menu", reply_markup=menu_btns)
 
@@ -118,5 +126,54 @@ async def contact_operators(callback_query: types.CallbackQuery):
     )
     await callback_query.message.answer(
         "So'rovingiz operatorlarimizga yuborildi, tez orada siz bilan aloqaga chiqishadi",
+        reply_markup=menu_btns,
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "my_referal_link"
+)
+async def get_referal_link(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+
+    set_state(user_id, PersonalDataStates.GET_REFERAL_LINK)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        f"Sizning referal linkingiz: {generate_referal_link(user_id)}\n ko'proq tanishlaringizni botimizga jalb qiling va qimmatbaho sovg'alarga ega bo'ling!",
+        reply_markup=back_to_main_menu_bnt,
+    )
+
+
+@dp.message_handler(
+    lambda message: message.text == "🔙 Ortga"
+    and get_state(message.from_user.id) == PersonalDataStates.GET_REFERAL_LINK
+)
+async def back_to_main_menu(message: types.Message):
+    menu_btns = generate_main_menu_btns()
+    await message.answer(
+        "Asosiy menu",
+        reply_markup=menu_btns,
+    )
+
+
+@dp.callback_query_handler(lambda callback_query: callback_query.data == "my_referals")
+async def get_referralers(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    data = get_referralers_data(user_id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        f"Siz taklif qilgan foydalanuvchilar 👇:\n{data}",
+        reply_markup=back_to_main_menu_inline_btn,
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "back_to_main_menu"
+)
+async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
+    menu_btns = generate_main_menu_btns()
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Asosiy menu",
         reply_markup=menu_btns,
     )

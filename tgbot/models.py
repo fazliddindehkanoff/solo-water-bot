@@ -24,10 +24,8 @@ class TelegramUser(models.Model):
     full_name = models.CharField(max_length=250, default="")
     phone_number = models.CharField(max_length=250, default="")
     address = models.CharField(max_length=500, default="")
-    subscription = models.ForeignKey(
-        "Subscription", on_delete=models.SET_NULL, null=True
-    )
     is_active = models.BooleanField(default=False)
+    bonus_balance = models.IntegerField(default=0)
     payment_type = models.IntegerField(choices=PAYMENT_CHOICES, default=0)
 
     def __str__(self) -> str:
@@ -72,9 +70,37 @@ class Subscription(models.Model):
     product_count = models.IntegerField()
     bonus = models.IntegerField()
     cost = models.DecimalField(max_digits=10, decimal_places=2)
+    expires_after = models.IntegerField(
+        verbose_name="Necha kundan so'ng tarif passiv bo'ladi?"
+    )
 
     def __str__(self) -> str:
         return f"{self.title} - {self.product_count} - {self.cost}"
+
+
+class UserSubscription(LifecycleModel):
+    user = models.ForeignKey(
+        TelegramUser, on_delete=models.CASCADE, related_name="subscriptions"
+    )
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE)
+    activation_date = models.DateTimeField(null=True)
+    number_of_available_products = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.subscription.title} - Activated on {self.activation_date}"
+
+    @property
+    def is_active(self):
+        return (
+            self.activation_date
+            and self.number_of_available_products > 0
+            and self.user.is_active
+        )
+
+    @hook(AFTER_CREATE)
+    def set_number_of_available_products(self):
+        self.number_of_available_products = self.subscription.product_count
+        self.save()
 
 
 class Account(models.Model):
