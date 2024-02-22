@@ -101,3 +101,22 @@ async def set_payment_type(callback_query: types.CallbackQuery):
         text=f"Yangi mijoz ro'yxatdan o'tdi, Mijoz ma'lumotlar:\n{client_data}",
     )
     await callback_query.message.answer("Asosiy menu", reply_markup=menu_btns)
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "contact_with_operator"
+)
+async def contact_operators(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    menu_btns = generate_main_menu_btns()
+
+    await callback_query.message.delete()
+    client_data = get_cliend_data(user_id)
+    await bot.send_message(
+        chat_id="-1002098130597",
+        text=f"Ushbu mijozimizga aloqaga chiqish zarur!\n{client_data}\n\n#aloqa #operator_yordami",
+    )
+    await callback_query.message.answer(
+        "So'rovingiz operatorlarimizga yuborildi, tez orada siz bilan aloqaga chiqishadi",
+        reply_markup=menu_btns,
+    )

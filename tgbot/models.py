@@ -34,6 +34,15 @@ class TelegramUser(models.Model):
         return self.full_name
 
 
+class Referral(models.Model):
+    referrer = models.ForeignKey(
+        TelegramUser, on_delete=models.CASCADE, related_name="referrals"
+    )
+    referred_user = models.ForeignKey(
+        TelegramUser, on_delete=models.CASCADE, related_name="referrer"
+    )
+
+
 class ProductTemplate(models.Model):
     title = models.CharField(verbose_name="Maxsulot nomi", max_length=250)
     volume_liters = models.IntegerField(verbose_name="Hajmi(Litrda): ")
