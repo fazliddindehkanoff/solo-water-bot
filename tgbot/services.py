@@ -1,3 +1,6 @@
+from aiogram import types
+from tgbot.bot.loader import bot
+
 from .models import Order, Referral, TelegramUser, UserSubscription
 
 
@@ -49,3 +52,29 @@ def create_order(user_id: str, number_of_products: int) -> int:
             print(e)
 
     return order_id
+
+
+async def forward_post_to_all_users(message: types.Message):
+    # Retrieve all users from the database
+    all_users = TelegramUser.objects.filter(role=2).all()
+    post_content = message.text
+    media_file = None
+
+    if message.photo:
+        media_file = message.photo[-1].file_id
+        post_content = message.caption
+    elif message.video:
+        media_file = message.video.file_id
+        post_content = message.caption
+
+    # Forward the post to each user
+    for user in all_users:
+        try:
+            if media_file:
+                # Send the media file along with the text content
+                await bot.send_photo(user.chat_id, media_file, caption=post_content)
+            else:
+                await bot.send_message(user.chat_id, post_content)
+        except Exception as e:
+            # Handle any exceptions, such as users who have blocked the bot
+            print(f"Failed to send post to user {user.chat_id}: {str(e)}")

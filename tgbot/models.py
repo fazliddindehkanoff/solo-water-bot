@@ -19,15 +19,19 @@ from .constants import (
 
 
 class TelegramUser(models.Model):
+    is_active = models.BooleanField(default=False, verbose_name="Aktivlik xolati")
+    role = models.IntegerField(choices=ROLE_CHOICES, default=2, verbose_name="Rol")
     chat_id = models.CharField(max_length=255)
-    role = models.IntegerField(choices=ROLE_CHOICES, default=2)
     state = models.CharField(max_length=255)
-    full_name = models.CharField(max_length=250, default="")
-    phone_number = models.CharField(max_length=250, default="")
-    address = models.CharField(max_length=500, default="")
-    is_active = models.BooleanField(default=False)
-    bonus_balance = models.IntegerField(default=0)
-    payment_type = models.IntegerField(choices=PAYMENT_CHOICES, default=0)
+    full_name = models.CharField(max_length=250, default="", verbose_name="To'liq ism")
+    phone_number = models.CharField(
+        max_length=250, default="", verbose_name="Telefon raqam"
+    )
+    address = models.CharField(max_length=500, default="", verbose_name="Manzil")
+    bonus_balance = models.IntegerField(default=0, verbose_name="Bonus ballar")
+    payment_type = models.IntegerField(
+        choices=PAYMENT_CHOICES, default=0, verbose_name="To'lov turi"
+    )
 
     def __str__(self) -> str:
         return self.full_name
@@ -235,9 +239,18 @@ class Order(LifecycleModel):
     number_of_products = models.IntegerField(
         verbose_name="Buyurtma qilingan maxsulotlar"
     )
+    curier = models.ForeignKey(
+        TelegramUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="related_orders",
+        verbose_name="Kurier",
+    )
     product = models.ForeignKey(ProductTemplate, on_delete=models.SET_NULL, null=True)
     status = models.IntegerField(choices=ORDER_STATUS_CHOICES, default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Yaratilgan vaqti"
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     @hook(AFTER_CREATE)

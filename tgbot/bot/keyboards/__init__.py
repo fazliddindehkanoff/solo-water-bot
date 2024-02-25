@@ -6,4 +6,5 @@ from .inline import (
     payment_option_btns,
     generate_main_menu_btns,
     back_to_main_menu_inline_btn,
+    admin_back_to_main_menu_inline_btn,
 )

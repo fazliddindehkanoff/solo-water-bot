@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib import admin
+from django.contrib.auth.models import User
 from unfold.admin import ModelAdmin
 
 from .models import (
@@ -12,6 +12,14 @@ from .models import (
     Order,
     InOutCome,
 )
+
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class UserAdminClass(ModelAdmin):
+    # list_display = ["type", "name", "balance"]
+    pass
 
 
 @admin.register(Account)
@@ -45,6 +53,7 @@ class TelegramUserAdminClass(ModelAdmin):
     list_filter = [
         "role",
     ]
+    search_fields = ["phone_number"]
 
 
 @admin.register(ProductInOut)

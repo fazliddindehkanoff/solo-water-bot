@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # external apps
     "django_lifecycle_checks",
+    "search_placeholder",
     # local apps
     "tgbot",
 ]
@@ -69,6 +70,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "src.context_processors.custom_context",
             ],
         },
     },
@@ -110,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "uz"
 
 TIME_ZONE = "Asia/Tashkent"
 
@@ -153,19 +155,27 @@ UNFOLD = {
                         "title": _("Dashboard"),
                         "icon": "dashboard",
                         "link": reverse_lazy("admin:index"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("Buyurtmalar ro'yxati"),
+                        "icon": "format_list_bulleted",
+                        "link": reverse_lazy("admin:tgbot_order_changelist"),
                     },
                     {
                         "title": _("Kirim-Chiqim"),
                         "icon": "swap_vert",
                         "link": reverse_lazy("admin:tgbot_inoutcome_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("Xisoblar"),
                         "icon": "account_balance_wallet",
                         "link": reverse_lazy("admin:tgbot_account_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
-                        "title": _("Foydalanuvchilar"),
+                        "title": _("Telegram bot foydalanuvchilari"),
                         "icon": "person",
                         "link": reverse_lazy("admin:tgbot_telegramuser_changelist"),
                     },
@@ -173,21 +183,31 @@ UNFOLD = {
                         "title": _("Maxsulot aylanmasi"),
                         "icon": "bloodtype",
                         "link": reverse_lazy("admin:tgbot_productinout_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("Maxsulotlar"),
                         "icon": "box",
                         "link": reverse_lazy("admin:tgbot_producttemplate_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("Ta'riflar"),
                         "icon": "subscriptions",
                         "link": reverse_lazy("admin:tgbot_subscription_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("Promotionlar"),
                         "icon": "list",
                         "link": reverse_lazy("admin:tgbot_promotion_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("Operatorlar"),
+                        "icon": "support_agent",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                 ],
             },
