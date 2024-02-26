@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.db import models
 from unfold.admin import ModelAdmin
+from unfold.forms import UserCreationForm, UserChangeForm, AdminPasswordChangeForm
+from unfold.contrib.forms.widgets import WysiwygWidget
+
 
 from .models import (
     TelegramUser,
@@ -17,7 +22,15 @@ admin.site.unregister(User)
 
 
 @admin.register(User)
-class UserAdminClass(ModelAdmin):
+class UserAdminClass(BaseUserAdmin, ModelAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+    formfield_overrides = {
+        models.TextField: {
+            "widget": WysiwygWidget,
+        }
+    }
     list_display = [
         "username",
         "is_staff",
