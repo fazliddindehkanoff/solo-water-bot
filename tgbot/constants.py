@@ -1,6 +1,7 @@
 ROLE_CHOICES = [
     (1, "Admin"),
-    (2, "User"),
+    (2, "Foydalanuvchi"),
+    (3, "Kurier"),
 ]
 
 

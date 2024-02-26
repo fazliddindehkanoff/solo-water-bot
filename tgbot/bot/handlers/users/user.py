@@ -33,6 +33,44 @@ async def ask_full_name(callback_query: types.CallbackQuery):
     await callback_query.message.answer("Iltimos to'liq ismingizni kiriting:")
 
 
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "register_by_operator"
+)
+async def register_by_operator(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    set_state(user_id, PersonalDataStates.REGISTER_BY_OPERATOR)
+
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Iltimos telefon raqamingizni tasdiqlang:", reply_markup=phone_number_btn
+    )
+
+
+@dp.message_handler(
+    lambda message: get_state(message.from_user.id)
+    == PersonalDataStates.REGISTER_BY_OPERATOR,
+    content_types=["contact", "text"],
+)
+async def get_phone_num(message: types.Message):
+    user_id = message.chat.id
+    try:
+        phone_number = message.contact.phone_number
+    except Exception:
+        await message.answer(
+            "Iltimos, telefon raqamingizni quyidagi tugma orqali tasdiqlang!",
+            reply_markup=phone_number_btn,
+        )
+        return
+    set_user_data(user_id, "phone_number", str(phone_number))
+    await message.answer(
+        "Operatorlarimiz siz bilan tez orada aloqaga chiqishadi",
+    )
+    await bot.send_message(
+        chat_id="-1002098130597",
+        text=f"Yangi mijoz ro'yxatdan o'tish uchun operator yordamini so'radi:\nMijoz telefon raqami{phone_number}\n\n#yangi_mijoz #yordam #ro'yxatga_olish",
+    )
+
+
 @dp.message_handler(
     lambda message: get_state(message.from_user.id) == PersonalDataStates.FULL_NAME
 )
@@ -55,11 +93,11 @@ async def answer_full_name(message: types.Message):
 )
 async def answer_phone(message: types.Message):
     user_id = message.chat.id
-    phone_number = message.contact.phone_number
-
-    if not phone_number:
+    try:
+        phone_number = message.contact.phone_number
+    except Exception:
         await message.answer(
-            "Iltimos, telefon raqamingizni jo'nating yoki kontaktni yuboring.",
+            "Iltimos, telefon raqamingizni quyidagi tugma orqali tasdiqlang!",
             reply_markup=phone_number_btn,
         )
         return

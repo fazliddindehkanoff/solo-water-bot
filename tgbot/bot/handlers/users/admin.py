@@ -1,7 +1,7 @@
 from aiogram import types
 from tgbot.bot.loader import dp
 from tgbot.bot.states.personal_data import PersonalDataStates
-from tgbot.selectors import get_state
+from tgbot.selectors import get_state, get_stats, get_user_bonuses
 from tgbot.services import forward_post_to_all_users, set_state
 from tgbot.bot.keyboards import (
     admins_main_menu_btns,
@@ -12,7 +12,9 @@ from tgbot.bot.keyboards import (
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "stats")
 async def statistics_handler(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
-    await callback_query.message.answer("Test")
+    await callback_query.message.answer(
+        get_stats(), reply_markup=admin_back_to_main_menu_inline_btn
+    )
 
 
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "send_ads")
@@ -44,4 +46,18 @@ async def forward_post_to_users(message: types.Message):
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "bonus_stats")
 async def bonus_stats_handler(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
-    await callback_query.message.answer("Test")
+
+    await callback_query.message.answer(
+        get_user_bonuses(), reply_markup=admin_back_to_main_menu_inline_btn
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "admin_back_to_main_menu"
+)
+async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Asosiy menu",
+        reply_markup=admins_main_menu_btns,
+    )

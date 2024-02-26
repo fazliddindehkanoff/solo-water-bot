@@ -94,3 +94,26 @@ def get_order_details(order):
         created_at_formatted = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
         data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtma xolati: </b> {order.get_status_display()}\n<b>Buyurtma berilgan vaqt: </b> {created_at_formatted}\n<b>Maxsulot soni: </b> {order.number_of_products}\n"
     return data
+
+
+def get_stats() -> str:
+    orders = Order.objects.all()
+    number_of_ordered_products = 0
+
+    for order in orders:
+        number_of_ordered_products += order.number_of_products
+
+    tg_users = TelegramUser.objects.all()
+
+    result = f"<b>Bot statistikasi:</b>\n\n<b>Umumiy buyurmalar soni:</b> {orders.count()}\n<b>Buyurtma qilingan suvlar soni:</b> {number_of_ordered_products}\n<b>Kurierlar soni:</b> {tg_users.filter(role=3).count()}\n<b>Foydalanuvchilar soni: {tg_users.filter(role=2).count()}</b>"
+
+    return result
+
+
+def get_user_bonuses():
+    data = "<b>Foydalanuvchilar yig'gan ballari:</b>\n\n"
+    users = TelegramUser.objects.filter(role=2).order_by("-bonus_balance")
+    for index, user in enumerate(users, start=1):
+        data += f"{index}. {user.full_name}({user.bonus_balance})\n"
+
+    return data

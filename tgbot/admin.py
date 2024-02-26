@@ -18,8 +18,10 @@ admin.site.unregister(User)
 
 @admin.register(User)
 class UserAdminClass(ModelAdmin):
-    # list_display = ["type", "name", "balance"]
-    pass
+    list_display = [
+        "username",
+        "is_staff",
+    ]
 
 
 @admin.register(Account)
