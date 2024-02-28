@@ -41,7 +41,7 @@ def get_cliend_data(user_id: str) -> str:
 
 
 def generate_referal_link(user_id: str) -> str:
-    return f"https://t.me/farqiyoooobot?start={user_id}"
+    return f"https://t.me/SoloWaterBot?start={user_id}"
 
 
 def get_referralers_data(user_id: str) -> str:
