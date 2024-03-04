@@ -16,6 +16,7 @@ from .models import (
     Account,
     Order,
     InOutCome,
+    Referral,
 )
 
 admin.site.unregister(User)
@@ -35,6 +36,11 @@ class UserAdminClass(BaseUserAdmin, ModelAdmin):
         "username",
         "is_staff",
     ]
+
+
+@admin.register(Referral)
+class ReferralAdminClass(ModelAdmin):
+    pass
 
 
 @admin.register(Account)

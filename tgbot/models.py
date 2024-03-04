@@ -6,6 +6,7 @@ from django_lifecycle import (
     BEFORE_UPDATE,
     BEFORE_DELETE,
     AFTER_CREATE,
+    AFTER_UPDATE,
 )
 
 from .constants import (
@@ -13,13 +14,17 @@ from .constants import (
     INOUTCOME_CHOICES,
     ORDER_STATUS_CHOICES,
     PAYMENT_CHOICES,
+    PAYMENT_STATUS_CHOICES,
     ROLE_CHOICES,
     SALES_CHOICES,
 )
 
 
-class TelegramUser(models.Model):
+class TelegramUser(LifecycleModel):
     is_active = models.BooleanField(default=False, verbose_name="Aktivlik xolati")
+    payment_status = models.IntegerField(
+        choices=PAYMENT_STATUS_CHOICES, default=1, verbose_name="To'lov statusi"
+    )
     role = models.IntegerField(choices=ROLE_CHOICES, default=2, verbose_name="Rol")
     chat_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
@@ -34,6 +39,38 @@ class TelegramUser(models.Model):
     )
 
     def __str__(self) -> str:
+        return self.full_name
+
+    @hook(AFTER_UPDATE, when="is_active")
+    def add_bonus(self):
+        if (
+            self.referrer.exists() and self.is_active
+        ):  # Check if there are any referrals
+            referral = self.referrer.first()  # Get the first related Referral object
+            referrer_user = referral.referrer  # Get the related TelegramUser object
+            bonus = self.subscriptions.last().subscription.bonus
+            referrer_user.bonus_balance += bonus
+            referrer_user.save()
+
+
+class Curier(models.Model):
+    full_name = models.CharField(max_length=255, verbose_name="To'liq ismi")
+    phone_number = models.CharField(max_length=20, verbose_name="Telefon raqami")
+    chat_id = models.CharField(max_length=255, verbose_name="Chat ID")
+    birth_date = models.DateField(verbose_name="Date of Birth")
+    passport_data = models.CharField(
+        max_length=255, verbose_name="Passport ma'lumotlari"
+    )
+    address = models.TextField(verbose_name="Manzil")
+    phone_numbers_2 = models.CharField(
+        max_length=255, verbose_name="2 chi telefon raqami"
+    )
+    car_model = models.CharField(max_length=255, verbose_name="Mashina modeli")
+    car_license_plate = models.CharField(
+        max_length=255, verbose_name="Mashina davlat raqami"
+    )
+
+    def __str__(self):
         return self.full_name
 
 
@@ -70,11 +107,15 @@ class Promotion(models.Model):
 
 
 class Subscription(models.Model):
-    title = models.CharField(max_length=255)
-    product_template = models.ForeignKey(ProductTemplate, on_delete=models.CASCADE)
-    product_count = models.IntegerField()
-    bonus = models.IntegerField()
-    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    title = models.CharField(verbose_name="Tarif Nomi", max_length=255)
+    product_template = models.ForeignKey(
+        ProductTemplate, verbose_name="Maxsulot", on_delete=models.CASCADE
+    )
+    product_count = models.IntegerField(verbose_name="Maxsulot soni")
+    bonus = models.IntegerField(verbose_name="Qo'shiladigan bonus bali")
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Sotilish narxi"
+    )
     expires_after = models.IntegerField(
         verbose_name="Necha kundan so'ng tarif passiv bo'ladi?"
     )
@@ -124,11 +165,11 @@ class Account(models.Model):
 
 
 class InOutCome(LifecycleModel):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=20, decimal_places=2)
-    description = models.TextField(blank=True, null=True)
+    account = models.ForeignKey(Account, verbose_name="Xisob", on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Miqdor")
+    description = models.TextField(blank=True, null=True, verbose_name="Izoh")
     date_added = models.DateTimeField(auto_now_add=True)
-    status = models.IntegerField(choices=INOUTCOME_CHOICES)
+    status = models.IntegerField(choices=INOUTCOME_CHOICES, verbose_name="Status")
 
     def __str__(self):
         return f"Income of {self.amount} for {self.account} added on {self.date_added}"
@@ -263,3 +304,17 @@ class Order(LifecycleModel):
             subscription.save()
         else:
             print("No subscription found for the customer:", self.customer)
+
+    @hook(AFTER_UPDATE)
+    def create_product_out(self):
+        if self.status == 2:
+            if self.customer.payment_type == 1:
+                account_id = 2
+            elif self.customer.payment_type == 2:
+                account_id = 1
+            ProductInOut.objects.create(
+                status=2,
+                account_id=account_id,
+                product_template=self.product,
+                number_of_products=self.number_of_products,
+            )

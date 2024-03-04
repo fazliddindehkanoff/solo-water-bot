@@ -64,6 +64,7 @@ async def get_phone_num(message: types.Message):
     set_user_data(user_id, "phone_number", str(phone_number))
     await message.answer(
         "Operatorlarimiz siz bilan tez orada aloqaga chiqishadi",
+        reply_markup=types.ReplyKeyboardRemove(),
     )
     await bot.send_message(
         chat_id="-1002098130597",
@@ -104,6 +105,7 @@ async def answer_phone(message: types.Message):
     set_user_data(user_id, "phone_number", str(phone_number))
     await message.answer(
         "Suv yetkazilishi kerak bo'lgan manzilni yuboring",
+        reply_markup=types.ReplyKeyboardRemove(),
     )
     set_state(user_id, PersonalDataStates.LOCATION)
 
@@ -194,7 +196,7 @@ async def get_referal_link(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     await callback_query.message.answer(
         f"Sizning referal linkingiz: {generate_referal_link(user_id)}\n ko'proq tanishlaringizni botimizga jalb qiling va qimmatbaho sovg'alarga ega bo'ling!",
-        reply_markup=back_to_main_menu_bnt,
+        reply_markup=back_to_main_menu_inline_btn,
     )
 
 

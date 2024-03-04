@@ -1,7 +1,6 @@
 ROLE_CHOICES = [
     (1, "Admin"),
     (2, "Foydalanuvchi"),
-    (3, "Kurier"),
 ]
 
 
@@ -45,6 +44,12 @@ NUM_EMOJIS = {
 PAYMENT_CHOICES = [
     (1, "Karta orqali"),
     (2, "Naqd orqali"),
+]
+
+PAYMENT_STATUS_CHOICES = [
+    (1, "To'lov qilmadi"),
+    (2, "To'lov kutilmoqda"),
+    (3, "To'lov qilindi"),
 ]
 
 MAIN_MENU_BTNS = {
