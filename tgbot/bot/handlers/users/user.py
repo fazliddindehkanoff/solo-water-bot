@@ -5,8 +5,8 @@ from tgbot.bot.keyboards import (
     generate_subscription_btns,
     payment_option_btns,
     generate_main_menu_btns,
-    back_to_main_menu_bnt,
     back_to_main_menu_inline_btn,
+    bonus_btns,
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.bot.states import PersonalDataStates
@@ -19,9 +19,16 @@ from tgbot.selectors import (
     get_referralers_data,
     get_state,
     get_subscriptions_info,
+    get_user_bonus,
+    get_user_details,
+    get_user_phone_number,
     is_user_active,
 )
 from tgbot.services import create_order, set_state, set_user_data
+
+
+ORDERS_CHANNEL = "-1002018856872"
+REGISTRATION_CHANNEL = "-1002098130597"
 
 
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "register")
@@ -67,7 +74,7 @@ async def get_phone_num(message: types.Message):
         reply_markup=types.ReplyKeyboardRemove(),
     )
     await bot.send_message(
-        chat_id="-1002098130597",
+        chat_id=REGISTRATION_CHANNEL,
         text=f"Yangi mijoz ro'yxatdan o'tish uchun operator yordamini so'radi:\nMijoz telefon raqami{phone_number}\n\n#yangi_mijoz #yordam #ro'yxatga_olish",
     )
 
@@ -161,7 +168,7 @@ async def set_payment_type(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     client_data = get_cliend_data(user_id)
     await bot.send_message(
-        chat_id="-1002098130597",
+        chat_id=REGISTRATION_CHANNEL,
         text=f"Yangi mijoz ro'yxatdan o'tdi, Mijoz ma'lumotlar:\n{client_data}\n\n#yangi_mijoz",
     )
     await callback_query.message.answer("Asosiy menu", reply_markup=menu_btns)
@@ -177,7 +184,7 @@ async def contact_operators(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     client_data = get_cliend_data(user_id)
     await bot.send_message(
-        chat_id="-1002098130597",
+        chat_id=ORDERS_CHANNEL,
         text=f"Ushbu mijozimizga aloqaga chiqish zarur!\n{client_data}\n\n#aloqa #operator_yordami",
     )
     await callback_query.message.answer(
@@ -191,24 +198,10 @@ async def contact_operators(callback_query: types.CallbackQuery):
 )
 async def get_referal_link(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-
-    set_state(user_id, PersonalDataStates.GET_REFERAL_LINK)
     await callback_query.message.delete()
     await callback_query.message.answer(
         f"Sizning referal linkingiz: {generate_referal_link(user_id)}\n ko'proq tanishlaringizni botimizga jalb qiling va qimmatbaho sovg'alarga ega bo'ling!",
         reply_markup=back_to_main_menu_inline_btn,
-    )
-
-
-@dp.message_handler(
-    lambda message: message.text == "🔙 Ortga"
-    and get_state(message.from_user.id) == PersonalDataStates.GET_REFERAL_LINK
-)
-async def back_to_main_menu(message: types.Message):
-    menu_btns = generate_main_menu_btns()
-    await message.answer(
-        "Asosiy menu",
-        reply_markup=menu_btns,
     )
 
 
@@ -282,7 +275,7 @@ async def get_number_of_order(message: types.Message):
             order_id = create_order(user_id, order_number)
             data = get_cliend_order_data(user_id, order_id, order_number)
             await bot.send_message(
-                "-1002098130597", f"Yangi buyurtma\n{data}\n\n#yangi_buyurtma"
+                ORDERS_CHANNEL, f"Yangi buyurtma\n{data}\n\n#yangi_buyurtma"
             )
             await message.answer(
                 "Buyurtmangiz qabul qilindi tez orada buyurtmangiz yetkaziladi",
@@ -294,8 +287,44 @@ async def get_number_of_order(message: types.Message):
 async def give_an_order(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     client_order_history = get_client_order_details(user_id)
+    user_details = get_user_details(chat_id=user_id)
     await callback_query.message.delete()
     await callback_query.message.answer(
-        f"Sizning buyurtmalar tarixingiz: \n\n{client_order_history}",
+        f"ℹ️ Sizning ma'lumotlaringiz: \n\n{user_details}\n\n{client_order_history}",
         reply_markup=back_to_main_menu_inline_btn,
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "exchange_bonus"
+)
+async def exchange_bonus(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    user_bonus = get_user_bonus(chat_id=user_id)
+    await callback_query.message.delete()
+    if user_bonus > 0:
+        await callback_query.message.answer(
+            f"Sizning bonuslaringiz soni: {user_bonus} ga teng.\n",
+            reply_markup=bonus_btns,
+        )
+    else:
+        await callback_query.message.answer(
+            "Sizda bonus ballar mavjud emas, Bonus ballar yig'ish uchun aktiv mijozlarni jalb qiling ",
+            reply_markup=generate_main_menu_btns(),
+        )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "proceed_exchange_bonus"
+)
+async def proceed_exchange_bonus(callback_query: types.CallbackQuery):
+    user_phone_num = get_user_phone_number(chat_id=callback_query.from_user.id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Sizning so'rovingiz adminlarimizga yuborildi, tez orada so'rovingiz bo'yicha aloqaga chiqamiz.",
+        reply_markup=generate_main_menu_btns(),
+    )
+    await bot.send_message(
+        REGISTRATION_CHANNEL,
+        f"Ushbu raqamdagi foydalanuvchi: {user_phone_num} \nbonus ballarini almashtirmoqchi\n#ball_ayirboshlash",
     )

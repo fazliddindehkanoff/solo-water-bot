@@ -1,12 +1,14 @@
 from aiogram import types
 from tgbot.bot.loader import bot
 
-from .models import Order, Referral, TelegramUser, UserSubscription
+from .models import Curier, Order, Referral, TelegramUser, UserSubscription
 
 
 def register_user(user_id: str, user_role: int = 2) -> tuple[int, bool]:
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if not user:
+        if user_role == 3:
+            Curier.objects.create(chat_id=user_id)
         TelegramUser.objects.create(chat_id=user_id, role=user_role)
         return user_role, False
     else:
@@ -27,6 +29,13 @@ def set_user_data(user_id: str, field: str, value: str):
         user.save()
     if field == "subscription":
         UserSubscription.objects.create(user=user, subscription_id=value)
+
+
+def set_courier_data(chat_id: str, field: str, value: str):
+    user = Curier.objects.filter(chat_id=chat_id).first()
+    if hasattr(user, field):
+        setattr(user, field, value)
+        user.save()
 
 
 def create_referal(user_id, refered_user_id):
@@ -76,5 +85,22 @@ async def forward_post_to_all_users(message: types.Message):
             else:
                 await bot.send_message(user.chat_id, post_content)
         except Exception as e:
-            # Handle any exceptions, such as users who have blocked the bot
             print(f"Failed to send post to user {user.chat_id}: {str(e)}")
+
+
+def remove_kurier_from_order(order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        order.curier = None
+        order.save()
+    except Order.DoesNotExist:
+        pass
+
+
+def update_order_status(order_id: int, status: int):
+    try:
+        order = Order.objects.get(id=order_id)
+        order.status = status
+        order.save()
+    except Order.DoesNotExist:
+        pass

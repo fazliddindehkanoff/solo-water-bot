@@ -1,6 +1,7 @@
 ROLE_CHOICES = [
     (1, "Admin"),
     (2, "Foydalanuvchi"),
+    (3, "Kurier"),
 ]
 
 
@@ -25,6 +26,7 @@ ORDER_STATUS_CHOICES = [
     (1, "Aktiv buyurtma"),
     (2, "Bajarildi"),
     (3, "Bekor qilindi"),
+    (4, "Buyurtma yo'lda"),
 ]
 
 NUM_EMOJIS = {
@@ -53,10 +55,17 @@ PAYMENT_STATUS_CHOICES = [
 ]
 
 MAIN_MENU_BTNS = {
-    "my_details": "📜 Mening buyurtmalar tarixim",
+    "my_details": "ℹ️ Mening ma'lumotlarim",
     "order": "🚚 Buyurtma berish",
     "my_referal_link": "🔗 Referal link olish",
-    "my_referals": "👥Referallarim",
+    "my_referals": "👥 Referallarim",
     "contact_with_operator": "📱 Operator bilan aloqa",
-    "subscriptions": "🧾 Tarif",
+    "subscriptions": "🧾 Tariflarimiz",
+    "exchange_bonus": "🔄 Bonus ballarni almashtirish",
+}
+
+COUIRER_MAIN_MENU_BTNS = {
+    "courier_details": "ℹ️ Mening ma'lumotlarim",
+    "courier_contact_with_operator": "📱 Operator bilan aloqa",
+    "history_of_orders": "📉 Yetkazmalar tarixi",
 }

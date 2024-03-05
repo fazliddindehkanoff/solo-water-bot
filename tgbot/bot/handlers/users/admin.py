@@ -17,6 +17,17 @@ async def statistics_handler(callback_query: types.CallbackQuery):
     )
 
 
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "get_link_for_curier"
+)
+async def curier_referal(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Ushbu linkni kurier bo'lib ishlaydigan xodimlaringizga yuboring, ular avval botdan foydalanmagan bo'lishlari kerak. \nhttps://t.me/SoloWaterBot?start=courier",
+        reply_markup=admin_back_to_main_menu_inline_btn,
+    )
+
+
 @dp.callback_query_handler(lambda callback_query: callback_query.data == "send_ads")
 async def receive_ad_content_handler(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id

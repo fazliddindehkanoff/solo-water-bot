@@ -43,35 +43,40 @@ class TelegramUser(LifecycleModel):
 
     @hook(AFTER_UPDATE, when="is_active")
     def add_bonus(self):
-        if (
-            self.referrer.exists() and self.is_active
-        ):  # Check if there are any referrals
-            referral = self.referrer.first()  # Get the first related Referral object
-            referrer_user = referral.referrer  # Get the related TelegramUser object
-            bonus = self.subscriptions.last().subscription.bonus
-            referrer_user.bonus_balance += bonus
-            referrer_user.save()
+        if self.referrer.exists() and self.is_active:
+            referral = self.referrer.first()
+            if referral.is_active:
+                referrer_user = referral.referrer
+                bonus = self.subscriptions.last().subscription.bonus
+                referrer_user.bonus_balance += bonus
+                referral.is_active = False
+                referral.save()
+                referrer_user.save()
 
 
 class Curier(models.Model):
-    full_name = models.CharField(max_length=255, verbose_name="To'liq ismi")
-    phone_number = models.CharField(max_length=20, verbose_name="Telefon raqami")
-    chat_id = models.CharField(max_length=255, verbose_name="Chat ID")
-    birth_date = models.DateField(verbose_name="Date of Birth")
+    full_name = models.CharField(max_length=255, null=True, verbose_name="To'liq ismi")
+    phone_number = models.CharField(
+        max_length=20, null=True, verbose_name="Telefon raqami"
+    )
+    chat_id = models.CharField(max_length=255, null=True, verbose_name="Chat ID")
+    birth_date = models.DateField(null=True, verbose_name="Date of Birth")
     passport_data = models.CharField(
-        max_length=255, verbose_name="Passport ma'lumotlari"
+        max_length=255, null=True, verbose_name="Passport ma'lumotlari"
     )
-    address = models.TextField(verbose_name="Manzil")
+    address = models.TextField(null=True, verbose_name="Manzil")
     phone_numbers_2 = models.CharField(
-        max_length=255, verbose_name="2 chi telefon raqami"
+        max_length=255, null=True, verbose_name="2 chi telefon raqami"
     )
-    car_model = models.CharField(max_length=255, verbose_name="Mashina modeli")
+    car_model = models.CharField(
+        max_length=255, null=True, verbose_name="Mashina modeli"
+    )
     car_license_plate = models.CharField(
-        max_length=255, verbose_name="Mashina davlat raqami"
+        max_length=255, null=True, verbose_name="Mashina davlat raqami"
     )
 
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name} ({self.phone_number})"
 
 
 class Referral(models.Model):
@@ -81,6 +86,7 @@ class Referral(models.Model):
     referred_user = models.ForeignKey(
         TelegramUser, on_delete=models.CASCADE, related_name="referrer"
     )
+    is_active = models.BooleanField(default=True)
 
 
 class ProductTemplate(models.Model):
@@ -275,16 +281,19 @@ class ProductInOut(LifecycleModel):
 
 class Order(LifecycleModel):
     customer = models.ForeignKey(
-        TelegramUser, on_delete=models.CASCADE, verbose_name="Klient"
+        TelegramUser,
+        on_delete=models.CASCADE,
+        verbose_name="Klient",
+        related_name="orders",
     )
     number_of_products = models.IntegerField(
         verbose_name="Buyurtma qilingan maxsulotlar"
     )
     curier = models.ForeignKey(
-        TelegramUser,
+        Curier,
         on_delete=models.SET_NULL,
         null=True,
-        related_name="related_orders",
+        related_name="assigned_orders",
         verbose_name="Kurier",
     )
     product = models.ForeignKey(ProductTemplate, on_delete=models.SET_NULL, null=True)

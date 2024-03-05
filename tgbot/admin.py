@@ -17,6 +17,7 @@ from .models import (
     Order,
     InOutCome,
     Referral,
+    Curier,
 )
 
 admin.site.unregister(User)
@@ -36,6 +37,11 @@ class UserAdminClass(BaseUserAdmin, ModelAdmin):
         "username",
         "is_staff",
     ]
+
+
+@admin.register(Curier)
+class CurierAdminClass(ModelAdmin):
+    list_display = ["full_name", "car_model", "phone_number", "phone_numbers_2"]
 
 
 @admin.register(Referral)
@@ -75,6 +81,11 @@ class TelegramUserAdminClass(ModelAdmin):
         "role",
     ]
     search_fields = ["phone_number"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.exclude(role=3)
+        return queryset
 
 
 @admin.register(ProductInOut)

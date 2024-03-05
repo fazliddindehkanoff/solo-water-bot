@@ -209,6 +209,11 @@ UNFOLD = {
                         "link": reverse_lazy("admin:auth_user_changelist"),
                         "permission": lambda request: request.user.is_superuser,
                     },
+                    {
+                        "title": _("Kuriyerlar"),
+                        "icon": "directions_run",
+                        "link": reverse_lazy("admin:tgbot_curier_changelist"),
+                    },
                 ],
             },
         ],

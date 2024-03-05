@@ -1,4 +1,5 @@
-from tgbot.models import Order, TelegramUser, Subscription, Referral
+from tgbot.constants import NUM_EMOJIS
+from tgbot.models import Curier, Order, Promotion, TelegramUser, Subscription, Referral
 
 
 def get_state(user_id: str) -> str:
@@ -76,7 +77,7 @@ def get_cliend_order_data(user_id: str, order_id: int, number_of_products: int) 
     return client_data
 
 
-def get_client_order_details(user_id: str):
+def get_client_order_details(user_id: str) -> str:
     data = ""
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     orders = Order.objects.filter(customer=user)
@@ -88,7 +89,7 @@ def get_client_order_details(user_id: str):
     return data
 
 
-def get_order_details(order):
+def get_order_details(order) -> str:
     data = ""
     if order:
         created_at_formatted = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -110,10 +111,140 @@ def get_stats() -> str:
     return result
 
 
-def get_user_bonuses():
+def get_user_bonuses() -> str:
     data = "<b>Foydalanuvchilar yig'gan ballari:</b>\n\n"
     users = TelegramUser.objects.filter(role=2).order_by("-bonus_balance")
     for index, user in enumerate(users, start=1):
         data += f"{index}. {user.full_name}({user.bonus_balance})\n"
 
     return data
+
+
+def get_user_bonus(chat_id: str) -> int:
+    user = TelegramUser.objects.filter(chat_id=chat_id).first()
+
+    if user:
+        return user.bonus_balance
+
+
+def get_user_phone_number(chat_id: str) -> str:
+    phone_number = ""
+    user = TelegramUser.objects.filter(chat_id=chat_id).first()
+
+    if user:
+        phone_number = user.phone_number
+
+    return phone_number
+
+
+def get_user_details(chat_id: str) -> str:
+    data = ""
+    user = TelegramUser.objects.filter(chat_id=chat_id).first()
+
+    if user:
+        orders_count = user.orders.count()
+        _last_sub = user.subscriptions.last().subscription
+        subscription_title = _last_sub.title
+        maximum_products = _last_sub.product_count
+        ordered_products_count = 0
+        for order in user.orders.all():
+            ordered_products_count += order.number_of_products
+        data = f"🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
+
+    return data
+
+
+def get_courier_details_formatted(user_id):
+    try:
+        courier = Curier.objects.get(chat_id=user_id)
+        taken_orders_count = courier.assigned_orders.count()
+        finished_orders = courier.assigned_orders.filter(status=2)
+        car_model = courier.car_model
+        car_license_plate = courier.car_license_plate
+        delivered_products_count = 0
+
+        for order in finished_orders:
+            delivered_products_count += order.number_of_products
+
+        formatted_details = (
+            f"🚚 <b>Yuklangan buyurtmalar soni:</b> {taken_orders_count}\n"
+            f"📦 <b>Bajarilgan buyurtmalar soni:</b> {finished_orders.count()}\n"
+            f"📦 <b>Yetkazilgan mahsulotlar soni:</b> {delivered_products_count}\n"
+            f"🚗 <b>Mashina modeli:</b> {car_model}\n"
+            f"🚗 <b>Mashina davlat raqami:</b> {car_license_plate}\n"
+        )
+
+        return formatted_details
+
+    except Curier.DoesNotExist:
+        return "Kuryer ma'lumotlari topilmadi."
+
+
+def get_finished_orders_details(user_id):
+    try:
+        courier = Curier.objects.get(chat_id=user_id)
+        finished_orders = courier.assigned_orders.filter(status=2)
+
+        if finished_orders.exists():
+            formatted_orders = ""
+            for order in finished_orders:
+                formatted_created_at = order.created_at.strftime("%H:%M:%S %d.%m.%Y")
+                formatted_order = (
+                    f"<b>Buyurtma raqami:</b> #{order.id}\n"
+                    f"<b>Buyurtma xolati:</b> Tugallandi\n"
+                    f"<b>Buyurtma berilgan vaqt:</b> {formatted_created_at}\n"
+                    f"<b>Maxsulot soni:</b> {order.number_of_products}\n\n"
+                )
+                formatted_orders += formatted_order
+
+            return formatted_orders
+        else:
+            return "Tugallangan buyurtmalar topilmadi."
+
+    except Curier.DoesNotExist:
+        return "Kuryer ma'lumotlari topilmadi."
+
+
+def get_curier_data(chat_id: str) -> str:
+    try:
+        curier = Curier.objects.get(chat_id=chat_id)
+        formatted_data = (
+            f"<b>To'liq ism:</b> {curier.full_name}\n"
+            f"<b>Birinchi telefon raqami:</b> {curier.phone_number}\n"
+            f"<b>Ikkinchi telefon raqami:</b> {curier.phone_numbers_2}\n"
+            f"<b>Mashina modeli:</b> {curier.car_model}\n"
+            f"<b>Mashina davlat raqami:</b> {curier.car_license_plate}"
+        )
+        return formatted_data
+    except Curier.DoesNotExist:
+        return "Kuryer ma'lumotlari topilmadi."
+
+
+def get_order_notification_text(order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        customer_name = order.customer.full_name
+        product_name = order.product.title
+        number_of_products = order.number_of_products
+
+        # Formatted text in Uzbek
+        text = f"Assalomu alaykum, {customer_name}!\n\n"
+        text += f"Sizning buyurtmangiz yetkazib berilmoqda:\n"
+        text += f"Maxsulot: {product_name}\n"
+        text += f"Soni: {number_of_products}\n"
+        text += "Holati: Yetkazib berilmoqda\n"
+
+        # Get customer's chat ID
+        chat_id = order.customer.chat_id
+
+        return text, chat_id
+    except Order.DoesNotExist:
+        return None, None
+
+
+def get_client_chat_id(order_id: int) -> str:
+    try:
+        order = Order.objects.get(id=order_id)
+        return order.customer.chat_id
+    except Order.DoesNotExist:
+        return ""
