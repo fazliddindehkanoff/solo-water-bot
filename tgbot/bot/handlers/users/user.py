@@ -97,7 +97,7 @@ async def answer_full_name(message: types.Message):
 
 @dp.message_handler(
     lambda message: get_state(message.from_user.id) == PersonalDataStates.PHONE_NUMBER,
-    content_types=["contact"],
+    content_types=["contact", "text"],
 )
 async def answer_phone(message: types.Message):
     user_id = message.chat.id

@@ -22,9 +22,6 @@ from .constants import (
 
 class TelegramUser(LifecycleModel):
     is_active = models.BooleanField(default=False, verbose_name="Aktivlik xolati")
-    payment_status = models.IntegerField(
-        choices=PAYMENT_STATUS_CHOICES, default=1, verbose_name="To'lov statusi"
-    )
     role = models.IntegerField(choices=ROLE_CHOICES, default=2, verbose_name="Rol")
     chat_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
@@ -105,7 +102,7 @@ class ProductTemplate(models.Model):
 
 
 class Promotion(models.Model):
-    number_of_stars = models.IntegerField()
+    number_of_stars = models.IntegerField(verbose_name="Bonus ballar")
     winning_price = models.IntegerField()
 
     def __str__(self) -> str:
@@ -134,9 +131,18 @@ class UserSubscription(LifecycleModel):
     user = models.ForeignKey(
         TelegramUser, on_delete=models.CASCADE, related_name="subscriptions"
     )
-    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE)
+    subscription = models.ForeignKey(
+        Subscription, on_delete=models.CASCADE, verbose_name="Tarif"
+    )
     activation_date = models.DateTimeField(null=True)
     number_of_available_products = models.IntegerField(default=0)
+    payment_status = models.IntegerField(
+        choices=PAYMENT_STATUS_CHOICES, default=1, verbose_name="To'lov statusi"
+    )
+
+    class Meta:
+        verbose_name = "Foydalanuvchi Tarifi"
+        verbose_name_plural = "Foydalanuvchi Tariflari"
 
     def __str__(self):
         return f"{self.user.full_name} - {self.subscription.title} - Activated on {self.activation_date}"
