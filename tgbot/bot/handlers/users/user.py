@@ -118,18 +118,22 @@ async def answer_phone(message: types.Message):
 
 
 @dp.message_handler(
-    lambda message: get_state(message.from_user.id) == PersonalDataStates.LOCATION
+    lambda message: get_state(message.from_user.id) == PersonalDataStates.LOCATION,
+    content_types=["location", "text"],
 )
 async def answer_location(message: types.Message):
     user_id = message.chat.id
-    address = message.text
-    text, subscription_ids = get_subscriptions_info()
-    subscription_btns = generate_subscription_btns(subscription_ids)
-    set_user_data(user_id, "address", address)
-    await message.answer(
-        f"ℹ️ Tariflarimiz haqida ma'lumotlar:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
-        reply_markup=subscription_btns,
-    )
+    if message.content_type == "location":
+        await message.answer("Iltimos manzilni habar ko'rinishida yuboring.")
+    else:
+        address = message.text
+        text, subscription_ids = get_subscriptions_info()
+        subscription_btns = generate_subscription_btns(subscription_ids)
+        set_user_data(user_id, "address", address)
+        await message.answer(
+            f"ℹ️ Tariflarimiz haqida ma'lumotlar:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
+            reply_markup=subscription_btns,
+        )
 
 
 @dp.callback_query_handler(
@@ -155,6 +159,23 @@ async def set_subscription(callback_query: types.CallbackQuery):
     await callback_query.message.answer(
         "To'lov turini tanlang: ", reply_markup=payment_option_btns
     )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data.startswith("renew:subscription")
+)
+async def renew_subscription(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    subscription_id = callback_query.data.split(":")[-1]
+    set_user_data(user_id, "subscription", subscription_id)
+    number_of_available_products = get_number_of_available_products(user_id)
+
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        f"Yangi tarifingiz aktivlashdi, nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
+        reply_markup=back_to_main_menu_inline_btn,
+    )
+    set_state(user_id, PersonalDataStates.GET_ORDER)
 
 
 @dp.callback_query_handler(
@@ -236,8 +257,15 @@ async def give_an_order(callback_query: types.CallbackQuery):
     number_of_available_products = get_number_of_available_products(user_id)
     await callback_query.message.delete()
 
-    if user_status and number_of_available_products > 0:
-        PersonalDataStates
+    if number_of_available_products == 0:
+        text, subscription_ids = get_subscriptions_info()
+        subscription_btns = generate_subscription_btns(subscription_ids, renew=True)
+        await callback_query.message.answer(
+            f"ℹ️ Siz tarifingiz bo'yicha barcha suv kapsulalarini qabul qilib bo'ldingiz, iltimos yangi tarif tanlang:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
+            reply_markup=subscription_btns,
+        )
+
+    elif user_status and not number_of_available_products == 0:
         await callback_query.message.answer(
             f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
             reply_markup=back_to_main_menu_inline_btn,

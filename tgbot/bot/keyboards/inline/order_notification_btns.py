@@ -26,9 +26,12 @@ def generate_order_on_way_btn(order_id: int) -> InlineKeyboardMarkup:
 
 def generate_finish_order_btn(order_id: int) -> InlineKeyboardMarkup:
     result = InlineKeyboardMarkup()
-    result.insert(
+    result.add(
         InlineKeyboardButton(
             "🏁 Buyurtma yakunlandi", callback_data=f"order_finished:{order_id}"
-        )
+        ),
+        InlineKeyboardButton(
+            "➖ Buyurtmani kamaytirish", callback_data=f"minimiz_order:{order_id}"
+        ),
     )
     return result

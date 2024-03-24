@@ -1,6 +1,7 @@
 from aiogram import types
-from tgbot.bot.loader import bot
+from django.db import transaction
 
+from tgbot.bot.loader import bot
 from .models import Curier, Order, Referral, TelegramUser, UserSubscription
 
 
@@ -104,3 +105,23 @@ def update_order_status(order_id: int, status: int):
         order.save()
     except Order.DoesNotExist:
         pass
+
+
+def decrease_order_and_get_quantity(order_id: int, decrease=True) -> int:
+    # Retrieve the order from the database within a transaction
+    with transaction.atomic():
+        try:
+            order = Order.objects.select_for_update().get(id=order_id)
+        except Order.DoesNotExist:
+            # Handle case where order is not found
+            return 0  # Return 0 or raise an exception as appropriate
+
+        # Decrease the quantity by one if it's greater than 1
+        if order.number_of_products > 1 and decrease:
+            order.number_of_products -= 1
+
+        # Save the changes to the database
+        order.save()
+
+    # Return the updated quantity
+    return order.number_of_products

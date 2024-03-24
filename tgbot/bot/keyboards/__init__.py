@@ -14,4 +14,5 @@ from .inline import (
     generate_order_btns,
     generate_order_on_way_btn,
     generate_finish_order_btn,
+    generate_quantity_buttons,
 )

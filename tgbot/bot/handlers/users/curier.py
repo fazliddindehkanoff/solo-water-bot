@@ -8,6 +8,7 @@ from tgbot.bot.keyboards import (
     generate_finish_order_btn,
     generate_main_menu_btns,
     phone_number_btn,
+    generate_quantity_buttons,
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.selectors import (
@@ -19,6 +20,7 @@ from tgbot.selectors import (
     get_state,
 )
 from tgbot.services import (
+    decrease_order_and_get_quantity,
     remove_kurier_from_order,
     set_courier_data,
     set_state,
@@ -120,6 +122,33 @@ async def order_on_the_way(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(
+    lambda callback_query: callback_query.data.startswith("decrease_quantity")
+)
+async def decrease_quantity(callback_query: types.CallbackQuery):
+    order_id = callback_query.data.split(":")[-1]
+    order_quantity = decrease_order_and_get_quantity(order_id=order_id)
+    keyboard = generate_quantity_buttons(order_quantity, order_id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Buyurtma qilingan mahsulotni kamaytiring:", reply_markup=keyboard
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data.startswith("minimiz_order")
+)
+async def minimize_order(callback_query: types.CallbackQuery):
+    print("order_id")
+    order_id = callback_query.data.split(":")[-1]
+    order_quantity = decrease_order_and_get_quantity(order_id=order_id, decrease=False)
+    keyboard = generate_quantity_buttons(order_quantity, order_id)
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Buyurtma qilingan mahsulotni kamaytiring:", reply_markup=keyboard
+    )
+
+
+@dp.callback_query_handler(
     lambda callback_query: callback_query.data.startswith("order_finished")
 )
 async def finish_order(callback_query: types.CallbackQuery):
@@ -135,6 +164,10 @@ async def finish_order(callback_query: types.CallbackQuery):
     await bot.send_message(
         chat_id=chat_id,
         text="Buyurtmangiz muvaffaqiyatli yetkazildi, agar bu habar no to'g'ri bo'lsa, iltimos operatorlarimizga habar bering",
+    )
+    await bot.send_message(
+        chat_id=chat_id,
+        text="asosiy menu",
         reply_markup=generate_main_menu_btns(),
     )
 
@@ -183,7 +216,7 @@ async def answer_courier_phone(message: types.Message):
         return
     set_courier_data(user_id, "phone_number", str(phone_number))
     await message.answer(
-        "Iltimos, tug'ulgan sanangizni ushbu formatda kiriting:",
+        "Iltimos, tug'ulgan sanangizni ushbu formatda kiriting: (yil-oy-kun)",
         reply_markup=types.ReplyKeyboardRemove(),
     )
     set_state(user_id, CourierRegistrationStates.BIRTH_DATE)
