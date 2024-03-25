@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # external apps
     "django_lifecycle_checks",
-    "adminsortable2",
     # local apps
     "tgbot",
 ]
