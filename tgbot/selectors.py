@@ -1,5 +1,4 @@
-from tgbot.constants import NUM_EMOJIS
-from tgbot.models import Curier, Order, Promotion, TelegramUser, Subscription, Referral
+from tgbot.models import Curier, Order, TelegramUser, Subscription
 
 
 def get_state(user_id: str) -> str:
@@ -27,7 +26,7 @@ def get_subscription_detail(subscription_id: int) -> str:
     subscription = Subscription.objects.filter(id=subscription_id).first()
 
     if subscription:
-        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,}\n"
+        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,} so'm\n"
 
     return subscription_detail
 

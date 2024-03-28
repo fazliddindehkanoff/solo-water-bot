@@ -7,9 +7,7 @@ def generate_subscription_btns(
 ) -> InlineKeyboardMarkup:
     subscription_btns = InlineKeyboardMarkup(row_width=5)
     for index, id in enumerate(subscription_ids, start=1):
-        callback_data = (
-            f"renew:subscription:{id}" if renew else f"renew:subscription:{id}"
-        )
+        callback_data = f"renew:subscription:{id}" if renew else f"subscription:{id}"
         subscription_btns.insert(
             InlineKeyboardButton(
                 f"{NUM_EMOJIS.get(index)}", callback_data=callback_data

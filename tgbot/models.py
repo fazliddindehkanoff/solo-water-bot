@@ -9,6 +9,7 @@ from django_lifecycle import (
     AFTER_UPDATE,
 )
 
+from .utils import send_message
 from .constants import (
     ACCOUNT_TYPE_CHOICES,
     INOUTCOME_CHOICES,
@@ -40,6 +41,10 @@ class TelegramUser(LifecycleModel):
 
     @hook(AFTER_UPDATE, when="is_active")
     def add_bonus(self):
+        send_message(
+            chat_id=self.chat_id,
+            text="Tabriklaymiz, sizning profilingiz aktivlashtirildi",
+        )
         if self.referrer.exists() and self.is_active:
             referral = self.referrer.first()
             if referral.is_active:
@@ -90,12 +95,8 @@ class ProductTemplate(models.Model):
     title = models.CharField(verbose_name="Maxsulot nomi", max_length=250)
     volume_liters = models.IntegerField(verbose_name="Hajmi(Litrda): ")
     number_of_products = models.IntegerField()
-    buying_price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Sotib olish narxi:"
-    )
-    selling_price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Sotish narxi:"
-    )
+    buying_price = models.IntegerField(verbose_name="Sotib olish narxi:")
+    selling_price = models.IntegerField(verbose_name="Sotish narxi:")
 
     def __str__(self) -> str:
         return f"{self.title} - {self.volume_liters} Liters"
@@ -116,9 +117,7 @@ class Subscription(models.Model):
     )
     product_count = models.IntegerField(verbose_name="Maxsulot soni")
     bonus = models.IntegerField(verbose_name="Qo'shiladigan bonus bali")
-    cost = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Sotilish narxi"
-    )
+    cost = models.IntegerField(verbose_name="Sotilish narxi")
     expires_after = models.IntegerField(
         verbose_name="Necha kundan so'ng tarif passiv bo'ladi?"
     )
@@ -168,9 +167,7 @@ class Account(models.Model):
     type = models.IntegerField(
         choices=ACCOUNT_TYPE_CHOICES, verbose_name="Xisob raqam turi"
     )
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=2, verbose_name="Mavjud Summa"
-    )
+    balance = models.IntegerField(verbose_name="Mavjud Summa")
 
     def __str__(self) -> str:
         return f"{self.get_type_display()}({self.name}) - {self.balance}"
@@ -178,7 +175,7 @@ class Account(models.Model):
 
 class InOutCome(LifecycleModel):
     account = models.ForeignKey(Account, verbose_name="Xisob", on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Miqdor")
+    amount = models.IntegerField(verbose_name="Miqdor")
     description = models.TextField(blank=True, null=True, verbose_name="Izoh")
     date_added = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(choices=INOUTCOME_CHOICES, verbose_name="Status")
