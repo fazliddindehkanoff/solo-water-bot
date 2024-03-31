@@ -5,7 +5,7 @@ from tgbot.bot.loader import dp
 from tgbot.bot.keyboards import (
     admins_main_menu_btns,
     registration_option_btns,
-    generate_main_menu_btns,
+    generate_menu_btns,
     courier_main_menu_btns,
 )
 from tgbot.bot.states import CourierRegistrationStates
@@ -18,7 +18,7 @@ async def bot_start(message: types.Message):
     user_id = message.chat.id
     user_role = 3 if command_args == "courier" else 2
     role, exists = register_user(user_id=user_id, user_role=user_role)
-    main_menu_btns = generate_main_menu_btns()
+    main_menu_btns = generate_menu_btns()
 
     if role == 1:
         await message.answer(

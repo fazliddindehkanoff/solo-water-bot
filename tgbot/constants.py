@@ -57,15 +57,20 @@ PAYMENT_STATUS_CHOICES = [
 MAIN_MENU_BTNS = {
     "my_details": "ℹ️ Mening ma'lumotlarim",
     "order": "🚚 Buyurtma berish",
-    "my_referal_link": "🔗 Referal link olish",
-    "my_referals": "👥 Referallarim",
+    "my_bonuses": "💰 Bonuslarim",
     "contact_with_operator": "📱 Operator bilan aloqa",
     "subscriptions": "🧾 Tariflarimiz",
-    "exchange_bonus": "🔄 Bonus ballarni almashtirish",
 }
 
 COUIRER_MAIN_MENU_BTNS = {
     "courier_details": "ℹ️ Mening ma'lumotlarim",
     "courier_contact_with_operator": "📱 Operator bilan aloqa",
     "history_of_orders": "📉 Yetkazmalar tarixi",
+}
+
+BONUS_MENU_BTNS = {
+    "my_referal_link": "🔗 Referal link olish",
+    "my_referals": "👥 Referallarim",
+    "exchange_bonus": "🔄 Bonus ballarni almashtirish",
+    "nr:back_to_main_menu": "🔙 Ortga",
 }

@@ -39,22 +39,6 @@ class TelegramUser(LifecycleModel):
     def __str__(self) -> str:
         return self.full_name
 
-    @hook(AFTER_UPDATE, when="is_active")
-    def add_bonus(self):
-        send_message(
-            chat_id=self.chat_id,
-            text="Tabriklaymiz, sizning profilingiz aktivlashtirildi",
-        )
-        if self.referrer.exists() and self.is_active:
-            referral = self.referrer.first()
-            if referral.is_active:
-                referrer_user = referral.referrer
-                bonus = self.subscriptions.last().subscription.bonus
-                referrer_user.bonus_balance += bonus
-                referral.is_active = False
-                referral.save()
-                referrer_user.save()
-
 
 class Curier(models.Model):
     full_name = models.CharField(max_length=255, null=True, verbose_name="To'liq ismi")
@@ -320,8 +304,17 @@ class Order(LifecycleModel):
     @hook(AFTER_UPDATE)
     def create_product_out(self):
         if self.status == 2:
+            subscription = self.customer.subscriptions.last()
+
+            if subscription:
+                subscription.number_of_available_products -= self.number_of_products
+                if not subscription.activation_date:
+                    subscription.activation_date = timezone.now()
+                subscription.save()
+
             if self.customer.payment_type == 1:
                 account_id = 2
+
             elif self.customer.payment_type == 2:
                 account_id = 1
             ProductInOut.objects.create(

@@ -4,7 +4,7 @@ from .inline import (
     generate_subscription_btns,
     registration_option_btns,
     payment_option_btns,
-    generate_main_menu_btns,
+    generate_menu_btns,
     back_to_main_menu_inline_btn,
     admin_back_to_main_menu_inline_btn,
     get_promotions,
@@ -15,4 +15,5 @@ from .inline import (
     generate_order_on_way_btn,
     generate_finish_order_btn,
     generate_quantity_buttons,
+    back_to_bonuses_menu_inline_btn,
 )

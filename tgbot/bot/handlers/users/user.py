@@ -4,9 +4,10 @@ from tgbot.bot.keyboards import (
     phone_number_btn,
     generate_subscription_btns,
     payment_option_btns,
-    generate_main_menu_btns,
+    generate_menu_btns,
     back_to_main_menu_inline_btn,
     bonus_btns,
+    back_to_bonuses_menu_inline_btn,
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.bot.states import PersonalDataStates
@@ -25,6 +26,7 @@ from tgbot.selectors import (
     is_user_active,
 )
 from tgbot.services import create_order, set_state, set_user_data
+from tgbot.constants import BONUS_MENU_BTNS
 
 
 ORDERS_CHANNEL = "-1002018856872"
@@ -184,7 +186,7 @@ async def renew_subscription(callback_query: types.CallbackQuery):
 async def set_payment_type(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     payment_type = callback_query.data.split(":")[-1]
-    menu_btns = generate_main_menu_btns()
+    menu_btns = generate_menu_btns()
     set_user_data(user_id, "payment_type", payment_type)
     await callback_query.message.delete()
     client_data = get_cliend_data(user_id)
@@ -200,7 +202,7 @@ async def set_payment_type(callback_query: types.CallbackQuery):
 )
 async def contact_operators(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    menu_btns = generate_main_menu_btns()
+    menu_btns = generate_menu_btns()
 
     await callback_query.message.delete()
     client_data = get_cliend_data(user_id)
@@ -222,7 +224,7 @@ async def get_referal_link(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     await callback_query.message.answer(
         f"Sizning referal linkingiz: {generate_referal_link(user_id)}\n ko'proq tanishlaringizni botimizga jalb qiling va qimmatbaho sovg'alarga ega bo'ling!",
-        reply_markup=back_to_main_menu_inline_btn,
+        reply_markup=back_to_bonuses_menu_inline_btn,
     )
 
 
@@ -230,10 +232,30 @@ async def get_referal_link(callback_query: types.CallbackQuery):
 async def get_referralers(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     data = get_referralers_data(user_id)
+    user_bonuses = get_user_bonus(chat_id=user_id)
+    await callback_query.message.delete()
+
+    if len(data) != 0:
+        await callback_query.message.answer(
+            f"Bonus ballaringiz:{user_bonuses}\nSiz taklif qilgan foydalanuvchilar 👇:\n{data}",
+            reply_markup=back_to_bonuses_menu_inline_btn,
+        )
+    else:
+        await callback_query.message.answer(
+            f"Siz hali hech kimni taklif qilmagansiz!",
+            reply_markup=back_to_bonuses_menu_inline_btn,
+        )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "back_to_bonuses_menu"
+)
+async def back_to_bonuses_menu(callback_query: types.CallbackQuery):
+    menu_btns = generate_menu_btns(BONUS_MENU_BTNS)
     await callback_query.message.delete()
     await callback_query.message.answer(
-        f"Siz taklif qilgan foydalanuvchilar 👇:\n{data}",
-        reply_markup=back_to_main_menu_inline_btn,
+        "Bonuslar menusi",
+        reply_markup=menu_btns,
     )
 
 
@@ -241,7 +263,7 @@ async def get_referralers(callback_query: types.CallbackQuery):
     lambda callback_query: callback_query.data == "back_to_main_menu"
 )
 async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
-    menu_btns = generate_main_menu_btns()
+    menu_btns = generate_menu_btns()
     await callback_query.message.delete()
     await callback_query.message.answer(
         "Asosiy menu",
@@ -253,7 +275,7 @@ async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
 async def give_an_order(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     user_status = is_user_active(user_id)
-    menu_btns = generate_main_menu_btns()
+    menu_btns = generate_menu_btns()
     number_of_available_products = get_number_of_available_products(user_id)
     await callback_query.message.delete()
 
@@ -307,7 +329,7 @@ async def get_number_of_order(message: types.Message):
             )
             await message.answer(
                 "Buyurtmangiz qabul qilindi tez orada buyurtmangiz yetkaziladi",
-                reply_markup=generate_main_menu_btns(),
+                reply_markup=generate_menu_btns(),
             )
 
 
@@ -338,8 +360,17 @@ async def exchange_bonus(callback_query: types.CallbackQuery):
     else:
         await callback_query.message.answer(
             "Sizda bonus ballar mavjud emas, Bonus ballar yig'ish uchun aktiv mijozlarni jalb qiling ",
-            reply_markup=generate_main_menu_btns(),
+            reply_markup=generate_menu_btns(BONUS_MENU_BTNS),
         )
+
+
+@dp.callback_query_handler(lambda callback_query: callback_query.data == "my_bonuses")
+async def bonuses(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Bonuslar menusi.",
+        reply_markup=generate_menu_btns(btns=BONUS_MENU_BTNS),
+    )
 
 
 @dp.callback_query_handler(
@@ -350,7 +381,7 @@ async def proceed_exchange_bonus(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     await callback_query.message.answer(
         "Sizning so'rovingiz adminlarimizga yuborildi, tez orada so'rovingiz bo'yicha aloqaga chiqamiz.",
-        reply_markup=generate_main_menu_btns(),
+        reply_markup=generate_menu_btns(),
     )
     await bot.send_message(
         REGISTRATION_CHANNEL,

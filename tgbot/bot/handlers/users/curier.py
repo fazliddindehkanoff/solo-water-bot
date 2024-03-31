@@ -6,7 +6,7 @@ from tgbot.bot.keyboards import (
     courier_main_menu_btns,
     generate_order_on_way_btn,
     generate_finish_order_btn,
-    generate_main_menu_btns,
+    generate_menu_btns,
     phone_number_btn,
     generate_quantity_buttons,
 )
@@ -15,7 +15,9 @@ from tgbot.selectors import (
     get_client_chat_id,
     get_courier_details_formatted,
     get_curier_data,
+    get_customer_subscription_payment_detail,
     get_finished_orders_details,
+    get_order_details,
     get_order_notification_text,
     get_state,
 )
@@ -24,6 +26,7 @@ from tgbot.services import (
     remove_kurier_from_order,
     set_courier_data,
     set_state,
+    update_order_quantity,
     update_order_status,
 )
 
@@ -122,30 +125,36 @@ async def order_on_the_way(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(
-    lambda callback_query: callback_query.data.startswith("decrease_quantity")
-)
-async def decrease_quantity(callback_query: types.CallbackQuery):
-    order_id = callback_query.data.split(":")[-1]
-    order_quantity = decrease_order_and_get_quantity(order_id=order_id)
-    keyboard = generate_quantity_buttons(order_quantity, order_id)
-    await callback_query.message.delete()
-    await callback_query.message.answer(
-        "Buyurtma qilingan mahsulotni kamaytiring:", reply_markup=keyboard
-    )
-
-
-@dp.callback_query_handler(
     lambda callback_query: callback_query.data.startswith("minimiz_order")
 )
 async def minimize_order(callback_query: types.CallbackQuery):
-    print("order_id")
     order_id = callback_query.data.split(":")[-1]
-    order_quantity = decrease_order_and_get_quantity(order_id=order_id, decrease=False)
-    keyboard = generate_quantity_buttons(order_quantity, order_id)
+    user_id = callback_query.from_user.id
+    keyboard = generate_finish_order_btn(order_id=order_id, minus_btn=False)
+    set_state(user_id=user_id, state=f"get_order_new_quantity:{order_id}")
+
     await callback_query.message.delete()
     await callback_query.message.answer(
-        "Buyurtma qilingan mahsulotni kamaytiring:", reply_markup=keyboard
+        "Buyurtma qilingan mahsulot sonini kiriting yoki buyurtmani yakunlang.",
+        reply_markup=keyboard,
     )
+
+
+@dp.message_handler(
+    lambda message: get_state(message.from_user.id).startswith("get_order_new_quantity")
+)
+async def change_quantity(message: types.Message):
+    order_id = get_state(message.from_user.id).split(":")[-1]
+    keyboard = generate_finish_order_btn(order_id=order_id, minus_btn=False)
+
+    if message.text.isdigit():
+        update_order_quantity(order_id=order_id, quantity=message.text)
+        await message.answer(
+            "Buyurtma qilingan mahsulotlar soni yangilandi.", reply_markup=keyboard
+        )
+
+    else:
+        await message.answer("Iltimos raqam yuboring !")
 
 
 @dp.callback_query_handler(
@@ -154,21 +163,30 @@ async def minimize_order(callback_query: types.CallbackQuery):
 async def finish_order(callback_query: types.CallbackQuery):
     order_id = callback_query.data.split(":")[-1]
     chat_id = get_client_chat_id(order_id=order_id)
+    payment_status, amount_of_payment = get_customer_subscription_payment_detail(
+        chat_id=chat_id
+    )
+    order_details = get_order_notification_text(order_id=order_id)
     update_order_status(order_id=order_id, status=2)
 
     await callback_query.message.delete()
+    if payment_status != 3:
+        await callback_query.message.answer(
+            f"Ushbu foydalanuvchi hali to'lov qilmagan, iltimos to'lov summasini olish esdan chiqmasin!\n<b>To'lov summasi:</b> {amount_of_payment:,} so'm"
+        )
+
     await callback_query.message.answer(
         "Buyurtma muvaffaqiyatli yakunlandi!",
         reply_markup=courier_main_menu_btns(),
     )
     await bot.send_message(
         chat_id=chat_id,
-        text="Buyurtmangiz muvaffaqiyatli yetkazildi, agar bu habar no to'g'ri bo'lsa, iltimos operatorlarimizga habar bering",
+        text=f"Buyurtmangiz muvaffaqiyatli yetkazildi, agar bu habar no to'g'ri bo'lsa, iltimos operatorlarimizga habar bering\n\nBuyurtmangiz ma'lumotlari: \n{order_details}",
     )
     await bot.send_message(
         chat_id=chat_id,
         text="asosiy menu",
-        reply_markup=generate_main_menu_btns(),
+        reply_markup=generate_menu_btns(),
     )
 
 

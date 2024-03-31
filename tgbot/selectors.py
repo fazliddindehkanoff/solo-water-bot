@@ -48,7 +48,9 @@ def get_referralers_data(user_id: str) -> str:
     data = ""
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if user:
-        for index, referraler in enumerate(user.referrals.all(), start=1):
+        for index, referraler in enumerate(
+            user.referrals.filter(is_active=True), start=1
+        ):
             data += f"{index}. {referraler.referred_user.full_name} - {referraler.referred_user.bonus_balance}"
 
     return data
@@ -148,7 +150,7 @@ def get_user_details(chat_id: str) -> str:
         ordered_products_count = 0
         for order in user.orders.all():
             ordered_products_count += order.number_of_products
-        data = f"🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
+        data = f"💰<b>Bonus ballarim: </b>:{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
 
     return data
 
@@ -219,7 +221,15 @@ def get_curier_data(chat_id: str) -> str:
         return "Kuryer ma'lumotlari topilmadi."
 
 
-def get_order_notification_text(order_id):
+def get_customer_subscription_payment_detail(chat_id: str) -> tuple[str, str]:
+    user = TelegramUser.objects.filter(chat_id=chat_id).first()
+    if user:
+        subscription = user.subscriptions.last()
+        return subscription.payment_status, subscription.subscription.cost
+    return "", ""
+
+
+def get_order_notification_text(order_id, status=None):
     try:
         order = Order.objects.get(id=order_id)
         customer_name = order.customer.full_name
@@ -231,7 +241,9 @@ def get_order_notification_text(order_id):
         text += f"Sizning buyurtmangiz yetkazib berilmoqda:\n"
         text += f"Maxsulot: {product_name}\n"
         text += f"Soni: {number_of_products}\n"
-        text += "Holati: Yetkazib berilmoqda\n"
+
+        if not status:
+            text += "Holati: Yetkazib berilmoqda\n"
 
         # Get customer's chat ID
         chat_id = order.customer.chat_id

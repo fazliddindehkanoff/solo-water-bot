@@ -125,3 +125,10 @@ def decrease_order_and_get_quantity(order_id: int, decrease=True) -> int:
 
     # Return the updated quantity
     return order.number_of_products
+
+
+def update_order_quantity(order_id: int, quantity: int) -> None:
+    order = Order.objects.filter(id=order_id).first()
+    if order:
+        order.number_of_products = quantity
+        order.save()

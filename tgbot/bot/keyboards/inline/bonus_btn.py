@@ -6,4 +6,4 @@ bonus_btns.add(
         "🔄 Bonuslarni almashtirish", callback_data="proceed_exchange_bonus"
     )
 )
-bonus_btns.add(InlineKeyboardButton("🔙 Ortga", callback_data="back_to_main_menu"))
+bonus_btns.add(InlineKeyboardButton("🔙 Ortga", callback_data="back_to_bonuses_menu"))
