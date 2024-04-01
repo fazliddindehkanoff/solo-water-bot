@@ -47,19 +47,24 @@ def create_referal(user_id, refered_user_id):
 
 
 def create_order(user_id: str, number_of_products: int) -> int:
-    order_id = 0
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     subscription = user.subscriptions.last()
+
     if user and user.subscriptions.last():
-        try:
-            order = Order.objects.create(
-                customer=user,
-                number_of_products=number_of_products,
-                product=subscription.subscription.product_template,
-            )
-            order_id = order.pk
-        except Exception as e:
-            print(e)
+        product_id = subscription.subscription.product_template.id
+    else:
+        product_id = 1
+
+    try:
+        order = Order.objects.create(
+            customer=user,
+            number_of_products=number_of_products,
+            product_id=product_id,
+        )
+        order_id = order.pk
+    except Exception as e:
+        order_id = 0
+        print(e)
 
     return order_id
 

@@ -61,9 +61,14 @@ def is_user_active(user_id: str) -> bool:
     return user and user.is_active
 
 
+def get_user_subscription_status(user_id: str) -> bool:
+    user = TelegramUser.objects.filter(chat_id=user_id).first()
+    return user and user.subscription_based
+
+
 def get_number_of_available_products(user_id: str) -> int:
     user = TelegramUser.objects.filter(chat_id=user_id).first()
-    if user:
+    if user and user.subscription_based:
         return user.subscriptions.last().number_of_available_products
     return 0
 
@@ -90,8 +95,11 @@ def get_client_order_details(user_id: str) -> str:
     return data
 
 
-def get_order_details(order) -> str:
+def get_order_details(order=None, order_id=None) -> str:
     data = ""
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+
     if order:
         created_at_formatted = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
         data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtma xolati: </b> {order.get_status_display()}\n<b>Buyurtma berilgan vaqt: </b> {created_at_formatted}\n<b>Maxsulot soni: </b> {order.number_of_products}\n"
@@ -259,3 +267,12 @@ def get_client_chat_id(order_id: int) -> str:
         return order.customer.chat_id
     except Order.DoesNotExist:
         return ""
+
+
+def calculate_order_cost(order_id: int) -> int:
+    order = Order.objects.filter(id=order_id).first()
+
+    if order:
+        return order.number_of_products * order.product.selling_price
+
+    return 0

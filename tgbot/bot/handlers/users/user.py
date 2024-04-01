@@ -23,6 +23,7 @@ from tgbot.selectors import (
     get_user_bonus,
     get_user_details,
     get_user_phone_number,
+    get_user_subscription_status,
     is_user_active,
 )
 from tgbot.services import create_order, set_state, set_user_data
@@ -151,12 +152,46 @@ async def list_of_subscriptions(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "without_subscription"
+)
+async def set_without_subscription(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    set_user_data(user_id, "subscription_based", False)
+
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "To'lov turini tanlang: ", reply_markup=payment_option_btns
+    )
+
+
+@dp.callback_query_handler(
+    lambda callback_query: callback_query.data == "renew:without_subscription"
+)
+async def set_without_subscription(callback_query: types.CallbackQuery):
+    print("TEST")
+    user_id = callback_query.from_user.id
+    set_user_data(user_id, "subscription_based", False)
+
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "Nechta kapsula buyurtma qilmoqchisiz?",
+        reply_markup=back_to_main_menu_inline_btn,
+    )
+
+
+@dp.callback_query_handler(
     lambda callback_query: callback_query.data.startswith("subscription")
 )
 async def set_subscription(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     subscription_id = callback_query.data.split(":")[-1]
-    set_user_data(user_id, "subscription", subscription_id)
+
+    if subscription_id != "0":
+        set_user_data(user_id, "subscription", subscription_id)
+
+    else:
+        set_user_data(user_id, "subscription_based", False)
+
     await callback_query.message.delete()
     await callback_query.message.answer(
         "To'lov turini tanlang: ", reply_markup=payment_option_btns
@@ -170,11 +205,10 @@ async def renew_subscription(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     subscription_id = callback_query.data.split(":")[-1]
     set_user_data(user_id, "subscription", subscription_id)
-    number_of_available_products = get_number_of_available_products(user_id)
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        f"Yangi tarifingiz aktivlashdi, nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
+        f"Yangi tarifingiz aktivlashdi, nechta kapsulada maxsulot buyurtma qilmoqchisiz? ",
         reply_markup=back_to_main_menu_inline_btn,
     )
     set_state(user_id, PersonalDataStates.GET_ORDER)
@@ -275,30 +309,38 @@ async def back_to_main_menu_from_referalls(callback_query: types.CallbackQuery):
 async def give_an_order(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     user_status = is_user_active(user_id)
+    subscription_based = get_user_subscription_status(user_id)
     menu_btns = generate_menu_btns()
     number_of_available_products = get_number_of_available_products(user_id)
+
     await callback_query.message.delete()
+    if subscription_based:
+        if number_of_available_products == 0:
+            text, subscription_ids = get_subscriptions_info()
+            subscription_btns = generate_subscription_btns(subscription_ids, renew=True)
+            await callback_query.message.answer(
+                f"ℹ️ Siz tarifingiz bo'yicha barcha suv kapsulalarini qabul qilib bo'ldingiz, iltimos yangi tarif tanlang:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
+                reply_markup=subscription_btns,
+            )
 
-    if number_of_available_products == 0:
-        text, subscription_ids = get_subscriptions_info()
-        subscription_btns = generate_subscription_btns(subscription_ids, renew=True)
-        await callback_query.message.answer(
-            f"ℹ️ Siz tarifingiz bo'yicha barcha suv kapsulalarini qabul qilib bo'ldingiz, iltimos yangi tarif tanlang:\n\n{text}Iltimos o'zingizga qulay bo'lgan ta'rif tanlang: ",
-            reply_markup=subscription_btns,
-        )
+        elif user_status and not number_of_available_products == 0:
+            await callback_query.message.answer(
+                f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
+                reply_markup=back_to_main_menu_inline_btn,
+            )
+            set_state(user_id, PersonalDataStates.GET_ORDER)
 
-    elif user_status and not number_of_available_products == 0:
+        else:
+            await callback_query.message.answer(
+                "Sizning akkauntingiz hali aktivlashmagan adminlarimiz tez orada siz bilan bog'lanishadi!",
+                reply_markup=menu_btns,
+            )
+    else:
         await callback_query.message.answer(
-            f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz? \nMaximum: {number_of_available_products}",
+            f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz?",
             reply_markup=back_to_main_menu_inline_btn,
         )
         set_state(user_id, PersonalDataStates.GET_ORDER)
-
-    else:
-        await callback_query.message.answer(
-            "Sizning akkauntingiz hali aktivlashmagan adminlarimiz tez orada siz bilan bog'lanishadi!",
-            reply_markup=menu_btns,
-        )
 
 
 @dp.message_handler(
@@ -307,11 +349,23 @@ async def give_an_order(callback_query: types.CallbackQuery):
 async def get_number_of_order(message: types.Message):
     user_id = message.from_user.id
     order_number: str = message.text
+    subscription_based = get_user_subscription_status(user_id)
     number_of_available_products = get_number_of_available_products(user_id)
 
     if not order_number.isdigit():
         await message.answer(
             "Iltimos faqat raqam yuboring", reply_markup=back_to_main_menu_inline_btn
+        )
+
+    elif not subscription_based:
+        order_id = create_order(user_id, order_number)
+        data = get_cliend_order_data(user_id, order_id, order_number)
+        await bot.send_message(
+            ORDERS_CHANNEL, f"Yangi buyurtma\n{data}\n\n#yangi_buyurtma"
+        )
+        await message.answer(
+            "Buyurtmangiz qabul qilindi tez orada buyurtmangiz yetkaziladi",
+            reply_markup=generate_menu_btns(),
         )
 
     else:

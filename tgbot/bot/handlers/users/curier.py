@@ -12,6 +12,7 @@ from tgbot.bot.keyboards import (
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.selectors import (
+    calculate_order_cost,
     get_client_chat_id,
     get_courier_details_formatted,
     get_curier_data,
@@ -20,6 +21,7 @@ from tgbot.selectors import (
     get_order_details,
     get_order_notification_text,
     get_state,
+    get_user_subscription_status,
 )
 from tgbot.services import (
     decrease_order_and_get_quantity,
@@ -163,11 +165,15 @@ async def change_quantity(message: types.Message):
 async def finish_order(callback_query: types.CallbackQuery):
     order_id = callback_query.data.split(":")[-1]
     chat_id = get_client_chat_id(order_id=order_id)
-    payment_status, amount_of_payment = get_customer_subscription_payment_detail(
-        chat_id=chat_id
-    )
-    order_details = get_order_notification_text(order_id=order_id)
+    subscription_status = get_user_subscription_status(chat_id)
+    if subscription_status:
+        payment_status, amount_of_payment = get_customer_subscription_payment_detail(
+            chat_id=chat_id
+        )
+    else:
+        payment_status, amount_of_payment = 0, calculate_order_cost(order_id)
     update_order_status(order_id=order_id, status=2)
+    order_details = get_order_details(order_id=order_id)
 
     await callback_query.message.delete()
     if payment_status != 3:

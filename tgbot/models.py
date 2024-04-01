@@ -9,7 +9,6 @@ from django_lifecycle import (
     AFTER_UPDATE,
 )
 
-from .utils import send_message
 from .constants import (
     ACCOUNT_TYPE_CHOICES,
     INOUTCOME_CHOICES,
@@ -35,6 +34,7 @@ class TelegramUser(LifecycleModel):
     payment_type = models.IntegerField(
         choices=PAYMENT_CHOICES, default=0, verbose_name="To'lov turi"
     )
+    subscription_based = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.full_name
@@ -290,17 +290,6 @@ class Order(LifecycleModel):
     )
     updated_at = models.DateTimeField(auto_now=True)
 
-    @hook(AFTER_CREATE)
-    def set_subscription_activated_date(self):
-        subscription = self.customer.subscriptions.last()
-        if subscription:
-            subscription.number_of_available_products -= self.number_of_products
-            if not subscription.activation_date:
-                subscription.activation_date = timezone.now()
-            subscription.save()
-        else:
-            print("No subscription found for the customer:", self.customer)
-
     @hook(AFTER_UPDATE)
     def create_product_out(self):
         if self.status == 2:
@@ -317,9 +306,17 @@ class Order(LifecycleModel):
 
             elif self.customer.payment_type == 2:
                 account_id = 1
+
             ProductInOut.objects.create(
                 status=2,
                 account_id=account_id,
                 product_template=self.product,
                 number_of_products=self.number_of_products,
             )
+            if not self.customer.subscription_based:
+                InOutCome.objects.create(
+                    status=1,
+                    account_id=self.customer.payment_type,
+                    amount=self.number_of_products * self.product.selling_price,
+                    description=f"{self.customer.full_name} ga {self.number_of_products} ta mahsulot yetkazib berildi",
+                )
