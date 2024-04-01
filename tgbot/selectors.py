@@ -157,13 +157,21 @@ def get_user_details(chat_id: str) -> str:
 
     if user:
         orders_count = user.orders.count()
-        _last_sub = user.subscriptions.last().subscription
-        subscription_title = _last_sub.title
-        maximum_products = _last_sub.product_count
         ordered_products_count = 0
+
+        if user.subscription_based:
+            _last_sub = user.subscriptions.last().subscription
+            subscription_title = _last_sub.title
+            maximum_products = _last_sub.product_count
+        else:
+            subscription_title = "Donalab sotib olish"
+
         for order in user.orders.all():
             ordered_products_count += order.number_of_products
-        data = f"💰<b>Bonus ballarim: </b>:{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
+        data = f"💰<b>Bonus ballarim: </b>:{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n"
+
+        if user.subscription_based:
+            data += f"🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
 
     return data
 
