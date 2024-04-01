@@ -131,7 +131,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
-CORS_ALLOWED_ORIGINS = ["https://bot.solowater.uz"]
+CSRF_TRUSTED_ORIGINS = ["https://bot.solowater.uz"]
 
 # admin settings:
 
