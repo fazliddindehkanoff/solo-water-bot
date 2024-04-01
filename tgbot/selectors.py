@@ -35,7 +35,12 @@ def get_cliend_data(user_id: str) -> str:
     client_data = ""
     user = TelegramUser.objects.filter(chat_id=user_id).first()
     if user:
-        client_data = f"\n<b>ID</b>: {user.pk}\n<b>Mijoz ismi:</b> {user.full_name}\n<b>Tanlangan ta'rif:</b> {user.subscriptions.first().subscription.title}\n<b>To'lov turi:</b> {user.get_payment_type_display()}\n<b>Manzil:</b> {user.address}\n<b>Telefon raqami:</b> {user.phone_number}"
+        subscription_title = (
+            user.subscriptions.first().subscription.title
+            if user.subscription_based
+            else "Donalab sotib olish"
+        )
+        client_data = f"\n<b>ID</b>: {user.pk}\n<b>Mijoz ismi:</b> {user.full_name}\n<b>Tanlangan ta'rif:</b> {subscription_title}\n<b>To'lov turi:</b> {user.get_payment_type_display()}\n<b>Manzil:</b> {user.address}\n<b>Telefon raqami:</b> {user.phone_number}"
 
     return client_data
 
