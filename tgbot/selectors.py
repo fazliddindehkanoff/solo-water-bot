@@ -168,7 +168,7 @@ def get_user_details(chat_id: str) -> str:
 
         for order in user.orders.all():
             ordered_products_count += order.number_of_products
-        data = f"💰<b>Bonus ballarim: </b>:{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n"
+        data = f"💰<b>Bonus ballarim: </b>{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n"
 
         if user.subscription_based:
             data += f"🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"

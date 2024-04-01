@@ -330,17 +330,18 @@ async def give_an_order(callback_query: types.CallbackQuery):
             )
             set_state(user_id, PersonalDataStates.GET_ORDER)
 
-        else:
-            await callback_query.message.answer(
-                "Sizning akkauntingiz hali aktivlashmagan adminlarimiz tez orada siz bilan bog'lanishadi!",
-                reply_markup=menu_btns,
-            )
-    else:
+    elif not subscription_based and user_status:
         await callback_query.message.answer(
             f"Nechta kapsulada maxsulot buyurtma qilmoqchisiz?",
             reply_markup=back_to_main_menu_inline_btn,
         )
         set_state(user_id, PersonalDataStates.GET_ORDER)
+
+    else:
+        await callback_query.message.answer(
+            "Sizning akkauntingiz hali aktivlashmagan adminlarimiz tez orada siz bilan bog'lanishadi!",
+            reply_markup=menu_btns,
+        )
 
 
 @dp.message_handler(
