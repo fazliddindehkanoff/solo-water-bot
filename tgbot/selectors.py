@@ -100,7 +100,7 @@ def get_client_order_details(user_id: str) -> str:
     return data
 
 
-def get_order_details(order=None, order_id=None) -> str:
+def get_order_details(order: Order = None, order_id=None, for_curier=False) -> str:
     data = ""
     if order_id:
         order = Order.objects.filter(id=order_id).first()
@@ -108,6 +108,11 @@ def get_order_details(order=None, order_id=None) -> str:
     if order:
         created_at_formatted = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
         data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtma xolati: </b> {order.get_status_display()}\n<b>Buyurtma berilgan vaqt: </b> {created_at_formatted}\n<b>Maxsulot soni: </b> {order.number_of_products}\n"
+
+    if for_curier:
+        customer = order.customer
+        data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtmachining to'liq ismi: </b>{customer.full_name}\n<b>Telefon raqami: </b>{customer.phone_number}\n<b>Manzili: </b> {customer.address}"
+
     return data
 
 

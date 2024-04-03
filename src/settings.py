@@ -201,6 +201,12 @@ UNFOLD = {
                         "permission": lambda request: request.user.is_superuser,
                     },
                     {
+                        "title": _("Bonus ball"),
+                        "icon": "list",
+                        "link": reverse_lazy("admin:tgbot_bonusexchange_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
                         "title": _("Operatorlar"),
                         "icon": "support_agent",
                         "link": reverse_lazy("admin:auth_user_changelist"),

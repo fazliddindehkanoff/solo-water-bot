@@ -1,11 +1,19 @@
 import asyncio
 from django.db.models.signals import pre_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 from tgbot.bot.loader import bot
 from tgbot.bot.keyboards import generate_order_btns
 from tgbot.utils import send_message
-from .models import Order, ProductInOut, TelegramUser
+from .models import (
+    BonusExchange,
+    InOutCome,
+    Order,
+    ProductInOut,
+    TelegramUser,
+    UserSubscription,
+)
 
 
 @receiver(pre_delete, sender=ProductInOut)
@@ -62,3 +70,31 @@ def before_save_telegram_user(sender, instance, **kwargs):
                     chat_id=referral.referred_user.chat_id,
                     text="Tabriklaymiz, sizning profilingiz aktivlashtirildi",
                 )
+
+
+@receiver(pre_save, sender=UserSubscription)
+def create_income(sender, instance, **kwargs):
+    if instance.pk:
+        old_instance = sender.objects.get(pk=instance.pk)
+        if old_instance.payment_status != 3 and instance.payment_status == 3:
+            InOutCome.objects.create(
+                status=1,
+                account_id=instance.user.payment_type,
+                amount=instance.subscription.cost,
+                description=f"{instance.user.full_name} {instance.subscription.title} tarifiga to'lov qildi",
+            )
+
+
+# @receiver(post_save, sender=BonusExchange)
+# def decrease_user_bonus(sender, instance, created, **kwargs):
+#     if created:
+#         user = instance.user
+#         ball = instance.ball
+#         if user.bonus_balance < ball:
+#             instance.error_flag = True
+#             instance.save()
+#         else:
+#             instance.error_flag = False
+#             user.bonus_balance -= ball
+#             instance.save()
+#             user.save()

@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db import models
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.forms import UserCreationForm, UserChangeForm, AdminPasswordChangeForm
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -19,6 +21,7 @@ from .models import (
     Referral,
     Curier,
     UserSubscription,
+    BonusExchange,
 )
 
 admin.site.unregister(User)
@@ -44,6 +47,33 @@ class UserAdminClass(BaseUserAdmin, ModelAdmin):
         "username",
         "is_staff",
     ]
+
+
+@admin.register(BonusExchange)
+class BonusExchangeAdminClass(ModelAdmin):
+    list_display = [
+        "user",
+        "ball",
+        "comment",
+    ]
+    autocomplete_fields = ["user"]
+
+    def add_view(self, request, form_url="", extra_context=None):
+        if request.method == "POST":
+            user_id = request.POST.get("user")
+            ball = int(request.POST.get("ball"))
+            user_bonus_balance = TelegramUser.objects.get(id=user_id).bonus_balance
+            if user_bonus_balance < ball:
+                self.message_user(
+                    request,
+                    "Tanlangan foydalanuvchida yetarli ball mavjud emas !",
+                    level="ERROR",
+                )
+                return HttpResponseRedirect(reverse("admin:tgbot_bonusexchange_add"))
+            else:
+                return super().add_view(request, form_url, extra_context)
+        else:
+            return super().add_view(request, form_url, extra_context)
 
 
 @admin.register(Curier)

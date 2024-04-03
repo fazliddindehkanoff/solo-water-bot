@@ -22,6 +22,9 @@ from .constants import (
 
 class TelegramUser(LifecycleModel):
     is_active = models.BooleanField(default=False, verbose_name="Aktivlik xolati")
+    subscription_based = models.BooleanField(
+        default=True, verbose_name="Tarif bo'yicha sotib oladimi?"
+    )
     role = models.IntegerField(choices=ROLE_CHOICES, default=2, verbose_name="Rol")
     chat_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
@@ -34,10 +37,21 @@ class TelegramUser(LifecycleModel):
     payment_type = models.IntegerField(
         choices=PAYMENT_CHOICES, default=0, verbose_name="To'lov turi"
     )
-    subscription_based = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.full_name
+
+
+class BonusExchange(models.Model):
+    user = models.ForeignKey(
+        TelegramUser, on_delete=models.CASCADE, verbose_name="Foydalanuvchi"
+    )
+    ball = models.IntegerField()
+    comment = models.TextField(verbose_name="Izoh")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Yaratilgan vaqti"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Curier(models.Model):

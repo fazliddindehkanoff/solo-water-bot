@@ -8,7 +8,6 @@ from tgbot.bot.keyboards import (
     generate_finish_order_btn,
     generate_menu_btns,
     phone_number_btn,
-    generate_quantity_buttons,
 )
 from tgbot.bot.loader import dp, bot
 from tgbot.selectors import (
@@ -24,7 +23,6 @@ from tgbot.selectors import (
     get_user_subscription_status,
 )
 from tgbot.services import (
-    decrease_order_and_get_quantity,
     remove_kurier_from_order,
     set_courier_data,
     set_state,
@@ -100,10 +98,11 @@ async def decline_order(callback_query: types.CallbackQuery):
 )
 async def accept_order(callback_query: types.CallbackQuery):
     order_id = callback_query.data.split(":")[-1]
+    order_details = get_order_details(order_id=order_id, for_curier=True)
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        "Endi yukni olib yo'lga chiqgan paytda quyidagi tugma orqali yo'lga chiqganingizni tasdiqlab qo'ying",
+        f"{order_details}\n\nBuyurtma yo'lga chiqganida quyidagi tugma orqali tasdiqlab qo'ying",
         reply_markup=generate_order_on_way_btn(order_id=order_id),
     )
 
@@ -117,10 +116,11 @@ async def order_on_the_way(callback_query: types.CallbackQuery):
     curier_data = get_curier_data(chat_id=callback_query.from_user.id)
     message = f"{_message}\nKurier ma'lumotlari: \n\n{curier_data}"
     update_order_status(order_id, 4)
+    order_details = get_order_details(order_id=order_id, for_curier=True)
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        "Endi yukni yetkazib bo'lgandan so'ng quyidagi tugma orqali buyurtma yakunlanganligini tasdiqlab qo'ying",
+        f"{order_details}\n\nBuyurtma yetkazib berilganida quyidagi tugma orqali buyurtma yakunlanganligini tasdiqlab qo'ying",
         reply_markup=generate_finish_order_btn(order_id=order_id),
     )
     await bot.send_message(chat_id=chat_id, text=message)
@@ -148,11 +148,13 @@ async def minimize_order(callback_query: types.CallbackQuery):
 async def change_quantity(message: types.Message):
     order_id = get_state(message.from_user.id).split(":")[-1]
     keyboard = generate_finish_order_btn(order_id=order_id, minus_btn=False)
+    order_details = get_order_details(order_id=order_id, for_curier=True)
 
     if message.text.isdigit():
         update_order_quantity(order_id=order_id, quantity=message.text)
         await message.answer(
-            "Buyurtma qilingan mahsulotlar soni yangilandi.", reply_markup=keyboard
+            f"{order_details}\n\nBuyurtma qilingan mahsulotlar soni yangilandi.",
+            reply_markup=keyboard,
         )
 
     else:
