@@ -1,0 +1,130 @@
+{% extends 'unfold/layouts/base_simple.html' %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% load admin_modify %}
+
+{% block title %}
+{% if subtitle %}
+{{ subtitle }} |
+{% endif %}
+{{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        {{ site_header|default:_('Django administration') }}
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock extrastyle %}
+{% block content %}
+
+<div class="container mx-auto">
+
+    <div class="border flex flex-col flex-grow p-6 rounded-md shadow-sm dark:border-gray-800{{ class }}">
+        <h2
+            class="border-b font-medium mb-6 -mt-2 -mx-6 pb-4 px-6 text-sm text-gray-700 dark:text-gray-200 dark:border-gray-800">
+            Statistics
+        </h2>
+        {% if today_orders_count > 0 %}
+        <div class="grid pt-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 justify-between">
+            <div class="flex flex-col text-center justify-center">
+                <button type="button" disabled
+                    class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    Buyurtma suvlar : &nbsp;
+                    <span
+                        class="inline-flex items-center justify-center w-4 h-4 ms-2 text-xs font-semibold text-blue-800 bg-white rounded-full">
+                        {{today_orders_count}}
+                    </span>
+                </button>
+            </div>
+            <div class="flex flex-col text-center justify-center">
+                <button type="button" disabled
+                    class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    Buyurtmachilar soni : &nbsp;
+                    <span
+                        class="inline-flex items-center justify-center w-4 h-4 ms-2 text-xs font-semibold text-blue-800 bg-white rounded-full">
+                        {{ today_orders_customer_count }}
+                    </span>
+                </button>
+            </div>
+            <div class="flex flex-col text-center justify-center">
+                <button type="button" disabled
+                    class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    Yakunlangan buyurtmalar : &nbsp;
+                    <span
+                        class="inline-flex items-center justify-center w-4 h-4 ms-2 text-xs font-semibold text-blue-800 bg-white rounded-full">
+                        {{ today_closed_orders_count }}
+                    </span>
+
+                </button>
+            </div>
+        </div>
+        <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
+
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            ID
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Foydalanuvchi Tel raqami
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Maxsulot soni
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Buyurtma Holati
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Manzil
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <span class="sr-only">Edit</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in today_orders %}
+                    <tr
+                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">1
+                        </th>
+                        <th scope="row" class="px-6 py-4">
+                            {{ order.customer.phone_number }}
+                        </th>
+                        <td class="px-6 py-4">
+                            {{ order.number_of_products }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ order.get_status_display }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ order.customer.address }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'admin:tgbot_order_changelist' %}"
+                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Ko'rish</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <h2 class="text-red-500 text-center font-semibold">Bugun hech qanday buyurtmalar qabul qilinmadi</h2>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
