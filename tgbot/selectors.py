@@ -26,7 +26,7 @@ def get_subscription_detail(subscription_id: int) -> str:
     subscription = Subscription.objects.filter(id=subscription_id).first()
 
     if subscription:
-        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,} so'm\n"
+        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,} so'm\n💸 Kashback: {subscription.cashback_amount:,} so'm\n"
 
     return subscription_detail
 
@@ -173,7 +173,7 @@ def get_user_details(chat_id: str) -> str:
 
         for order in user.orders.all():
             ordered_products_count += order.number_of_products
-        data = f"💰<b>Bonus ballarim: </b>{user.bonus_balance}\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n"
+        data = f"💰<b>Bonus ballar: </b>{user.bonus_balance}\n💸 <b>Kashbak qiymati: </b>{user.cashback:,} so'm\n🧮 <b>Buyurtmalar soni: </b>{orders_count}\n💧 <b>Buyurtma qilingan suvlar: </b>{ordered_products_count}\n📋 <b>Hozirgi ta'rif nomi: </b>{subscription_title}\n"
 
         if user.subscription_based:
             data += f"🫙 <b>Tarif bo'yicha kapsulalar soni: </b> {maximum_products}"
@@ -255,6 +255,13 @@ def get_customer_subscription_payment_detail(chat_id: str) -> tuple[str, str]:
     return "", ""
 
 
+def get_available_bottles(chat_id: str) -> int:
+    user = TelegramUser.objects.filter(chat_id=chat_id).first()
+    if user:
+        return user.available_bottles
+    return 0
+
+
 def get_order_notification_text(order_id, status=None):
     try:
         order = Order.objects.get(id=order_id)
@@ -264,7 +271,7 @@ def get_order_notification_text(order_id, status=None):
 
         # Formatted text in Uzbek
         text = f"Assalomu alaykum, {customer_name}!\n\n"
-        text += f"Sizning buyurtmangiz yetkazib berilmoqda:\n"
+        text += "Sizning buyurtmangiz yetkazib berilmoqda:\n"
         text += f"Maxsulot: {product_name}\n"
         text += f"Soni: {number_of_products}\n"
 

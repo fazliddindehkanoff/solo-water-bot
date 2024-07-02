@@ -1,12 +1,10 @@
 from django.db import models
-from django.utils import timezone
 from django_lifecycle import (
     LifecycleModel,
     hook,
     BEFORE_UPDATE,
     BEFORE_DELETE,
     AFTER_CREATE,
-    AFTER_UPDATE,
 )
 
 from .constants import (
@@ -21,25 +19,56 @@ from .constants import (
 
 
 class TelegramUser(LifecycleModel):
-    is_active = models.BooleanField(default=False, verbose_name="Aktivlik xolati")
+    is_active = models.BooleanField(
+        default=False,
+        verbose_name="Aktivlik xolati",
+    )
     subscription_based = models.BooleanField(
         default=True, verbose_name="Tarif bo'yicha sotib oladimi?"
     )
-    role = models.IntegerField(choices=ROLE_CHOICES, default=2, verbose_name="Rol")
-    chat_id = models.CharField(max_length=255)
-    state = models.CharField(max_length=255)
-    full_name = models.CharField(max_length=250, default="", verbose_name="To'liq ism")
+    role = models.IntegerField(
+        choices=ROLE_CHOICES,
+        default=2,
+        verbose_name="Rol",
+    )
+    chat_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    state = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    full_name = models.CharField(
+        max_length=250,
+        default="",
+        verbose_name="To'liq ism",
+        blank=True,
+    )
     phone_number = models.CharField(
         max_length=250, default="", verbose_name="Telefon raqam"
     )
-    address = models.CharField(max_length=500, default="", verbose_name="Manzil")
+    address = models.CharField(
+        max_length=500,
+        default="",
+        verbose_name="Manzil",
+    )
+    cashback = models.BigIntegerField(
+        default=0,
+        verbose_name="Kashbak summasi",
+    )
     bonus_balance = models.IntegerField(default=0, verbose_name="Bonus ballar")
     payment_type = models.IntegerField(
         choices=PAYMENT_CHOICES, default=0, verbose_name="To'lov turi"
     )
+    available_bottles = models.IntegerField(
+        default=0, verbose_name="Bo'sh idishlar soni"
+    )
 
     def __str__(self) -> str:
-        return self.full_name
+        return self.phone_number
 
 
 class BonusExchange(models.Model):
@@ -55,11 +84,19 @@ class BonusExchange(models.Model):
 
 
 class Curier(models.Model):
-    full_name = models.CharField(max_length=255, null=True, verbose_name="To'liq ismi")
+    full_name = models.CharField(
+        max_length=255,
+        null=True,
+        verbose_name="To'liq ismi",
+    )
     phone_number = models.CharField(
         max_length=20, null=True, verbose_name="Telefon raqami"
     )
-    chat_id = models.CharField(max_length=255, null=True, verbose_name="Chat ID")
+    chat_id = models.CharField(
+        max_length=255,
+        null=True,
+        verbose_name="Chat ID",
+    )
     birth_date = models.DateField(null=True, verbose_name="Date of Birth")
     passport_data = models.CharField(
         max_length=255, null=True, verbose_name="Passport ma'lumotlari"
@@ -116,9 +153,17 @@ class Subscription(models.Model):
     product_count = models.IntegerField(verbose_name="Maxsulot soni")
     bonus = models.IntegerField(verbose_name="Qo'shiladigan bonus bali")
     cost = models.IntegerField(verbose_name="Sotilish narxi")
+    cashback_amount = models.IntegerField(
+        verbose_name="Kashbak narxi",
+        default=0,
+    )
     expires_after = models.IntegerField(
         verbose_name="Necha kundan so'ng tarif passiv bo'ladi?"
     )
+
+    class Meta:
+        verbose_name = "Tarif"
+        verbose_name_plural = "Tariflar"
 
     def __str__(self) -> str:
         return f"{self.title} - {self.product_count} - {self.cost}"
@@ -134,7 +179,9 @@ class UserSubscription(LifecycleModel):
     activation_date = models.DateTimeField(null=True)
     number_of_available_products = models.IntegerField(default=0)
     payment_status = models.IntegerField(
-        choices=PAYMENT_STATUS_CHOICES, default=1, verbose_name="To'lov statusi"
+        choices=PAYMENT_STATUS_CHOICES,
+        default=1,
+        verbose_name="To'lov statusi",
     )
 
     class Meta:
@@ -142,7 +189,7 @@ class UserSubscription(LifecycleModel):
         verbose_name_plural = "Foydalanuvchi Tariflari"
 
     def __str__(self):
-        return f"{self.user.full_name} - {self.subscription.title} - Activated on {self.activation_date}"
+        return f"{self.user.full_name} - {self.subscription.title} - Activated on {self.activation_date}"  # noqa
 
     @property
     def is_active(self):
@@ -172,14 +219,22 @@ class Account(models.Model):
 
 
 class InOutCome(LifecycleModel):
-    account = models.ForeignKey(Account, verbose_name="Xisob", on_delete=models.CASCADE)
+    account = models.ForeignKey(
+        Account,
+        verbose_name="Xisob",
+        on_delete=models.CASCADE,
+    )
     amount = models.IntegerField(verbose_name="Miqdor")
-    description = models.TextField(blank=True, null=True, verbose_name="Izoh")
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Izoh",
+    )
     date_added = models.DateTimeField(auto_now_add=True)
-    status = models.IntegerField(choices=INOUTCOME_CHOICES, verbose_name="Status")
+    status = models.CharField(max_length=255, choices=INOUTCOME_CHOICES)
 
     def __str__(self):
-        return f"Income of {self.amount} for {self.account} added on {self.date_added}"
+        return f"Income of {self.amount} for {self.account} added on {self.date_added}"  # noqa
 
     @hook(AFTER_CREATE)
     def update_account(self):
@@ -206,13 +261,15 @@ class ProductInOut(LifecycleModel):
     product_template = models.ForeignKey(
         ProductTemplate, on_delete=models.CASCADE, verbose_name="Maxsulot nomi"
     )
-    number_of_products = models.IntegerField(verbose_name="Sotib olingan maxsulot soni")
+    number_of_products = models.IntegerField(
+        verbose_name="Sotib olingan maxsulot soni",
+    )
 
     def __str__(self) -> str:
         if self.status == 1:
-            return f"{self.product_template} - {self.product_template.buying_price} - {self.number_of_products}"
+            return f"{self.product_template} - {self.product_template.buying_price} - {self.number_of_products}"  # noqa
         elif self.status == 2:
-            return f"{self.product_template} - {self.product_template.selling_price} - {self.number_of_products}"
+            return f"{self.product_template} - {self.product_template.selling_price} - {self.number_of_products}"  # noqa
 
     @hook(AFTER_CREATE)
     def after_create_increase_number_of_products(self):
@@ -251,14 +308,19 @@ class ProductInOut(LifecycleModel):
                 )
             if self.status == 1:
                 self.account.balance -= (
-                    self.product_template.buying_price * self.number_of_products
+                    self.product_template.buying_price * self.number_of_products  # noqa
                 )
-                self.product_template.number_of_products += self.number_of_products
+                self.product_template.number_of_products += (
+                    self.number_of_products
+                )  # noqa
             elif self.status == 2:
                 self.account.balance += (
-                    self.product_template.selling_price * self.number_of_products
+                    self.product_template.selling_price
+                    * self.number_of_products  # noqa
                 )
-                self.product_template.number_of_products -= self.number_of_products
+                self.product_template.number_of_products -= (
+                    self.number_of_products
+                )  # noqa
 
             self.account.save()
             self.product_template.save()
@@ -294,43 +356,24 @@ class Order(LifecycleModel):
         Curier,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="assigned_orders",
         verbose_name="Kurier",
     )
-    product = models.ForeignKey(ProductTemplate, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(
+        ProductTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Maxsulot",
+    )
     status = models.IntegerField(choices=ORDER_STATUS_CHOICES, default=1)
+    created_date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Yaratilgan vaqti"
+        auto_now_add=True, verbose_name="Buyurtma berilgan vaqti"
+    )
+    finished_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Buyurtma tugatilgan vaqti",
     )
     updated_at = models.DateTimeField(auto_now=True)
-
-    @hook(AFTER_UPDATE)
-    def create_product_out(self):
-        if self.status == 2:
-            subscription = self.customer.subscriptions.last()
-
-            if subscription:
-                subscription.number_of_available_products -= self.number_of_products
-                if not subscription.activation_date:
-                    subscription.activation_date = timezone.now()
-                subscription.save()
-
-            if self.customer.payment_type == 1:
-                account_id = 2
-
-            elif self.customer.payment_type == 2:
-                account_id = 1
-
-            ProductInOut.objects.create(
-                status=2,
-                account_id=account_id,
-                product_template=self.product,
-                number_of_products=self.number_of_products,
-            )
-            if not self.customer.subscription_based:
-                InOutCome.objects.create(
-                    status=1,
-                    account_id=self.customer.payment_type,
-                    amount=self.number_of_products * self.product.selling_price,
-                    description=f"{self.customer.full_name} ga {self.number_of_products} ta mahsulot yetkazib berildi",
-                )

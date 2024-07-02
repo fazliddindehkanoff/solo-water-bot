@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from asgiref.sync import async_to_sync
 from .webhook import proceed_update
 from django.http import HttpResponse, HttpRequest

@@ -52,7 +52,8 @@ async def register_by_operator(callback_query: types.CallbackQuery):
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        "Iltimos telefon raqamingizni tasdiqlang:", reply_markup=phone_number_btn
+        "Iltimos telefon raqamingizni tasdiqlang:",
+        reply_markup=phone_number_btn,
     )
 
 
@@ -208,7 +209,7 @@ async def renew_subscription(callback_query: types.CallbackQuery):
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        f"Yangi tarifingiz aktivlashdi, nechta kapsulada maxsulot buyurtma qilmoqchisiz? ",
+        "Yangi tarifingiz aktivlashdi, nechta kapsulada maxsulot buyurtma qilmoqchisiz? ",
         reply_markup=back_to_main_menu_inline_btn,
     )
     set_state(user_id, PersonalDataStates.GET_ORDER)

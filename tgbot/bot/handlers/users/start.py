@@ -40,7 +40,10 @@ async def bot_start(message: types.Message):
 
     elif role == 3:
         if exists:
-            await message.answer("Asosiy menu", reply_markup=courier_main_menu_btns())
+            await message.answer(
+                "Asosiy menu",
+                reply_markup=courier_main_menu_btns(),
+            )
 
         else:
             await message.answer(

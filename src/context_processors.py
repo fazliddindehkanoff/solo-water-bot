@@ -20,7 +20,13 @@ def custom_context(request):
     today_closed_orders_count = closed_today_orders.count()
 
     # Count the number of unique customers who placed orders today
-    today_orders_customer_count = today_orders.values("customer").distinct().count()
+    today_orders_customer_count = (
+        today_orders.values(
+            "customer",
+        )
+        .distinct()
+        .count()
+    )
 
     return {
         "today_orders": today_orders,

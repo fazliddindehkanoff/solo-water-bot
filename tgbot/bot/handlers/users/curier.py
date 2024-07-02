@@ -12,6 +12,7 @@ from tgbot.bot.keyboards import (
 from tgbot.bot.loader import dp, bot
 from tgbot.selectors import (
     calculate_order_cost,
+    get_available_bottles,
     get_client_chat_id,
     get_courier_details_formatted,
     get_curier_data,
@@ -174,6 +175,7 @@ async def finish_order(callback_query: types.CallbackQuery):
         )
     else:
         payment_status, amount_of_payment = 0, calculate_order_cost(order_id)
+    number_of_bottles = get_available_bottles(chat_id=chat_id)
     update_order_status(order_id=order_id, status=2)
     order_details = get_order_details(order_id=order_id)
 
@@ -182,7 +184,10 @@ async def finish_order(callback_query: types.CallbackQuery):
         await callback_query.message.answer(
             f"Ushbu foydalanuvchi hali to'lov qilmagan, iltimos to'lov summasini olish esdan chiqmasin!\n<b>To'lov summasi:</b> {amount_of_payment:,} so'm"
         )
-
+    if number_of_bottles > 0:
+        await callback_query.message.answer(
+            f"Ushbu mijozda avvalgi buyurtmadan qolgan bo'sh idishlar mavjud!\n<b>Bo'sh idishlar soni:</b> {number_of_bottles}"
+        )
     await callback_query.message.answer(
         "Buyurtma muvaffaqiyatli yakunlandi!",
         reply_markup=courier_main_menu_btns(),

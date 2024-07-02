@@ -1,14 +1,20 @@
+from datetime import datetime
+
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db import models
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
+
 from unfold.admin import ModelAdmin, TabularInline
-from unfold.forms import UserCreationForm, UserChangeForm, AdminPasswordChangeForm
+from unfold.forms import (
+    UserCreationForm,
+    UserChangeForm,
+    AdminPasswordChangeForm,
+)
 from unfold.contrib.forms.widgets import WysiwygWidget
-
-
+from unfold.contrib.filters.admin import RangeDateFilter
 from .models import (
     TelegramUser,
     ProductInOut,
@@ -62,14 +68,18 @@ class BonusExchangeAdminClass(ModelAdmin):
         if request.method == "POST":
             user_id = request.POST.get("user")
             ball = int(request.POST.get("ball"))
-            user_bonus_balance = TelegramUser.objects.get(id=user_id).bonus_balance
+            user_bonus_balance = TelegramUser.objects.get(
+                id=user_id
+            ).bonus_balance  # noqa
             if user_bonus_balance < ball:
                 self.message_user(
                     request,
                     "Tanlangan foydalanuvchida yetarli ball mavjud emas !",
                     level="ERROR",
                 )
-                return HttpResponseRedirect(reverse("admin:tgbot_bonusexchange_add"))
+                return HttpResponseRedirect(
+                    reverse("admin:tgbot_bonusexchange_add")
+                )  # noqa
             else:
                 return super().add_view(request, form_url, extra_context)
         else:
@@ -78,7 +88,12 @@ class BonusExchangeAdminClass(ModelAdmin):
 
 @admin.register(Curier)
 class CurierAdminClass(ModelAdmin):
-    list_display = ["full_name", "car_model", "phone_number", "phone_numbers_2"]
+    list_display = [
+        "full_name",
+        "car_model",
+        "phone_number",
+        "phone_numbers_2",
+    ]
 
 
 @admin.register(Referral)
@@ -98,13 +113,53 @@ class AccountAdminClass(ModelAdmin):
 
 @admin.register(Order)
 class OrderAdminClass(ModelAdmin):
-    list_display = ["customer", "status", "number_of_products", "created_at"]
-    list_filter = ["status"]
+    list_display = [
+        "customer",
+        "status",
+        "number_of_products",
+        "created_at",
+        "finished_date",
+    ]
+    search_fields = ["customer__phone_number"]
+    list_filter_submit = True
+    list_filter = [
+        "status",
+        ("created_date", RangeDateFilter),
+    ]
+
+    def get_queryset(self, request: HttpRequest) -> models.QuerySet:
+        query_params = request.GET.dict()
+        from_date_str = query_params.get("created_date_from", None)
+        to_date_str = query_params.get("created_date_to", None)
+        queryset = super().get_queryset(request)
+
+        date_format = "%d.%m.%Y"  # Desired input format
+
+        if from_date_str:
+            try:
+                from_date = datetime.strptime(
+                    from_date_str,
+                    date_format,
+                ).date()
+                queryset = queryset.filter(created_date__gte=from_date)
+            except ValueError:
+                # Handle improper date format
+                pass
+
+        if to_date_str:
+            try:
+                to_date = datetime.strptime(to_date_str, date_format).date()
+                queryset = queryset.filter(created_date__lte=to_date)
+            except ValueError:
+                # Handle improper date format
+                pass
+
+        return queryset
 
 
 @admin.register(InOutCome)
 class InOutComeAdminClass(ModelAdmin):
-    list_display = ["account", "formatted_amount", "status", "date_added"]
+    list_display = ["account", "formatted_amount", "date_added"]
 
     def formatted_amount(self, obj):
         return f"{obj.amount:,}"
@@ -134,7 +189,14 @@ class SubscriptionAdminClass(ModelAdmin):
 
 @admin.register(TelegramUser)
 class TelegramUserAdminClass(ModelAdmin):
-    list_display = ["phone_number", "role", "payment_type", "is_active"]
+    list_display = [
+        "phone_number",
+        "role",
+        "payment_type",
+        "available_bottles",
+        "cashback",
+        "is_active",
+    ]
     list_filter = [
         "role",
     ]
@@ -145,6 +207,15 @@ class TelegramUserAdminClass(ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.exclude(role=3)
         return queryset
+
+    def get_readonly_fields(self, request, obj=None):
+        return [
+            "chat_id",
+            "bonus_balance",
+            "state",
+            "cashback",
+            "available_bottles",
+        ]
 
 
 @admin.register(ProductInOut)

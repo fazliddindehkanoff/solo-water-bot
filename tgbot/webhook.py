@@ -1,6 +1,6 @@
 import json
 from aiogram import types, Bot, Dispatcher
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from .bot.loader import bot, dp
 
 
