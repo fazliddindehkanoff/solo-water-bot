@@ -272,7 +272,7 @@ async def get_referralers(callback_query: types.CallbackQuery):
 
     if len(data) != 0:
         await callback_query.message.answer(
-            f"Bonus ballaringiz:{user_bonuses}\nSiz taklif qilgan foydalanuvchilar 👇:\n{data}",
+            f"Bonusingiz:{user_bonuses} so'm\nSiz taklif qilgan foydalanuvchilar 👇:\n{data}",
             reply_markup=back_to_bonuses_menu_inline_btn,
         )
     else:

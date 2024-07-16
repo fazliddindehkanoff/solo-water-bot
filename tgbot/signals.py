@@ -4,7 +4,7 @@ from django.db.models.signals import pre_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from tgbot.bot.loader import bot
-from tgbot.bot.keyboards import generate_order_btns
+from tgbot.bot.keyboards import generate_order_btns, generate_menu_btns
 from tgbot.utils import send_message
 from .models import (
     BonusExchange,
@@ -17,14 +17,14 @@ from .models import (
 
 
 def save_referal(user, subscription):
-    bonus = subscription.bonus
+    bonus = subscription.referal_bonus
     cashback_amount = subscription.cashback_amount
 
     if user.referrer.exists():
         referral = user.referrer.last()
         if referral.is_active:
             referrer_user = referral.referrer
-            referrer_user.bonus_balance += bonus
+            referrer_user.cashback += bonus
             referral.is_active = False
 
             referral.save()
@@ -35,7 +35,7 @@ def save_referal(user, subscription):
                 text="Tabriklaymiz, Siz taklif qilgan "
                 f"{user.full_name} "
                 f"ning profili aktivlatshtirilda va sizga {bonus} "
-                "ball bonus berildi",
+                "so'm bonus berildi",
             )
 
     user.cashback += cashback_amount
@@ -119,9 +119,12 @@ def before_save_telegram_user(sender, instance, **kwargs):
     if instance.pk:
         old_instance = sender.objects.get(pk=instance.pk)
         if not old_instance.is_active and instance.is_active:
-            send_message(
-                chat_id=instance.chat_id,
-                text="Tabriklaymiz, sizning profilingiz aktivlashtirildi",
+            asyncio.run(
+                bot.send_message(
+                    chat_id=instance.chat_id,
+                    text="Tabriklaymiz, sizning profilingiz aktivlashtirildi",
+                    reply_markup=generate_menu_btns(),
+                )
             )
 
 
@@ -138,14 +141,23 @@ def create_income_and_add_bonus(sender, instance, created, **kwargs):
     )
 
     if created:
+        print("created?")
         if instance.payment_status == 3:
             save_referal(user=user, subscription=subscription)
 
-    else:
+
+@receiver(pre_save, sender=UserSubscription)
+def pre_save_user_subscription(sender, instance, **kwargs):
+    if instance.pk:
+        user = instance.user
+        subscription = instance.subscription
         old_instance = sender.objects.get(pk=instance.pk)
-        print(old_instance.payment_status != 3 and instance.payment_status == 3)
+
         if old_instance.payment_status != 3 and instance.payment_status == 3:
             save_referal(user=user, subscription=subscription)
+
+        if not old_instance.is_active and instance.is_active:
+            save_referal(user=instance.user, subscription=instance.subscription)
 
 
 @receiver(post_save, sender=BonusExchange)

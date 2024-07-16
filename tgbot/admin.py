@@ -179,7 +179,7 @@ class PromotionAdminClass(ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdminClass(ModelAdmin):
-    list_display = ["title", "formatted_cost", "product_count", "bonus"]
+    list_display = ["title", "formatted_cost", "product_count"]
 
     def formatted_cost(self, obj):
         return f"{obj.cost:,}"
@@ -211,10 +211,10 @@ class TelegramUserAdminClass(ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return [
             "chat_id",
-            "bonus_balance",
             "state",
             "cashback",
             "available_bottles",
+            "bonus_in_percent",
         ]
 
 
