@@ -111,7 +111,7 @@ def get_order_details(order: Order = None, order_id=None, for_curier=False) -> s
 
     if for_curier:
         customer = order.customer
-        data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtmachining to'liq ismi: </b>{customer.full_name}\n<b>Telefon raqami: </b>{customer.phone_number}\n<b>Manzili: </b> {customer.address}"
+        data = f"<b>Buyurtma raqami: </b>{order.id}\n<b>Buyurtmachining to'liq ismi: </b>{customer.full_name}\n<b>Telefon raqami: </b>{customer.phone_number}\n<b>Manzili: </b> {customer.address}\n<b>Maxsulot soni: </b> {order.number_of_products}"
 
     return data
 
