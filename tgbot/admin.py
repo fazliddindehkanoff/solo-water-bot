@@ -197,6 +197,7 @@ class TelegramUserAdminClass(ModelAdmin):
         "cashback",
         "is_active",
     ]
+    exclude = ["state"]
     list_filter = [
         "role",
     ]
@@ -211,7 +212,6 @@ class TelegramUserAdminClass(ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return [
             "chat_id",
-            "state",
             "cashback",
             "available_bottles",
             "bonus_in_percent",

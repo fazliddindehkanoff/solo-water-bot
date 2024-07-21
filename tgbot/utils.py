@@ -16,3 +16,7 @@ def send_message(chat_id, text):
         print("Message sent successfully!")
     except requests.exceptions.RequestException as e:
         print(f"Failed to send message: {e}")
+
+
+def calc_percentage(part, whole):
+    return 100 * (float(part) / float(whole))

@@ -26,7 +26,7 @@ def get_subscription_detail(subscription_id: int) -> str:
     subscription = Subscription.objects.filter(id=subscription_id).first()
 
     if subscription:
-        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,} so'm\n💸 Kashback: {subscription.cashback_amount:,} so'm\n"
+        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n💸 Keyingi donalab sotib olish uchun kashbak foizi:{subscription.cashback_percent}\n💰 Tarif narxi: {subscription.cost:,} so'm\n💸 Referalning har bir xaridlaridan olinadigan cashback narxi: {subscription.cashback_amount:,} so'm\n💰 Referal bonusi: {subscription.referal_bonus}"
 
     return subscription_detail
 

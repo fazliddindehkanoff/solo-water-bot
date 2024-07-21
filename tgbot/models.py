@@ -57,11 +57,12 @@ class TelegramUser(LifecycleModel):
     )
     cashback = models.BigIntegerField(
         default=0,
-        verbose_name="Kashbak summasi",
+        verbose_name="cashback summasi",
     )
     bonus_in_percent = models.IntegerField(
-        default=0, verbose_name="Tarif sotib olish uchun bonus foizi"
+        default=0, verbose_name="Donalab sotib olish uchun bonus foizi"
     )
+    cashback_for_referer = models.IntegerField(default=0)
     payment_type = models.IntegerField(
         choices=PAYMENT_CHOICES, default=0, verbose_name="To'lov turi"
     )
@@ -155,13 +156,13 @@ class Subscription(models.Model):
     product_count = models.IntegerField(verbose_name="Maxsulot soni")
     cost = models.IntegerField(verbose_name="Sotilish narxi")
     cashback_percent = models.IntegerField(
-        verbose_name="Keyingi tarif xaridlari uchun kashbak foizi"
+        verbose_name="Keyingi xaridlari uchun cashback foizi"
     )
     referal_bonus = models.IntegerField(
         verbose_name="Referal bonusi (so'mda)", default=0
     )
     cashback_amount = models.IntegerField(
-        verbose_name="Kashbak narxi",
+        verbose_name="Taklif qilgan foydalanuvchining har bir dona maxsulotdan olinadigan cashback summasi",  # noqa
         default=0,
     )
     expires_after = models.IntegerField(
