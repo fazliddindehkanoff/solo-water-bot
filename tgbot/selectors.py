@@ -26,7 +26,7 @@ def get_subscription_detail(subscription_id: int) -> str:
     subscription = Subscription.objects.filter(id=subscription_id).first()
 
     if subscription:
-        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n🧮 Bonus ball:{subscription.bonus}\n💰 Tarif narxi: {subscription.cost:,} so'm\n💸 Kashback: {subscription.cashback_amount:,} so'm\n"
+        subscription_detail = f"📜 Tarif nomi: {subscription.title} \n🫙 Kapsulalar soni: {subscription.product_count}\n💸 Keyingi donalab sotib olish uchun kashbak foizi:{subscription.cashback_percent}\n💰 Tarif narxi: {subscription.cost:,} so'm\n💸 Referalning har bir xaridlaridan olinadigan cashback narxi: {subscription.cashback_amount:,} so'm\n💰 Referal bonusi: {subscription.referal_bonus}"
 
     return subscription_detail
 
@@ -56,7 +56,7 @@ def get_referralers_data(user_id: str) -> str:
         for index, referraler in enumerate(
             user.referrals.filter(is_active=True), start=1
         ):
-            data += f"{index}. {referraler.referred_user.full_name} - {referraler.referred_user.bonus_balance}"
+            data += f"{index}. {referraler.referred_user.full_name} - {referraler.referred_user.cashback}"
 
     return data
 
@@ -143,7 +143,7 @@ def get_user_bonus(chat_id: str) -> int:
     user = TelegramUser.objects.filter(chat_id=chat_id).first()
 
     if user:
-        return user.bonus_balance
+        return user.cashback
 
 
 def get_user_phone_number(chat_id: str) -> str:

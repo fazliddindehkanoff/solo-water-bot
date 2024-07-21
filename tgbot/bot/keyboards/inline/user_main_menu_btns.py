@@ -1,7 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from tgbot.constants import MAIN_MENU_BTNS
-from tgbot.models import TelegramUser
 
 
 def generate_menu_btns(btns: dict = MAIN_MENU_BTNS) -> InlineKeyboardMarkup:
@@ -13,7 +12,12 @@ def generate_menu_btns(btns: dict = MAIN_MENU_BTNS) -> InlineKeyboardMarkup:
             if current_row:
                 menu_btns.add(*current_row)
                 current_row = []
-        current_row.append(InlineKeyboardButton(title, callback_data=callback_data))
+        current_row.append(
+            InlineKeyboardButton(
+                title,
+                callback_data=callback_data,
+            )
+        )
 
     if current_row:
         menu_btns.add(*current_row)
